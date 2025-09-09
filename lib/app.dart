@@ -1,7 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:notebox/features/home_page.dart';
+import 'package:notebox/features/home/home_page.dart';
 import 'package:notebox/theme/app_colors.dart';
 import 'package:notebox/theme/theme_mode.dart';
 

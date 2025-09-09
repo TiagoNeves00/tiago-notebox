@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notebox/features/home/widgets/folder_carousel.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
 class HomePage extends ConsumerWidget {
@@ -43,13 +44,15 @@ class HomePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
+          const FolderCarousel(),
+          const SizedBox(height: 8),
           Expanded(
             child: ListView.builder(
               itemCount: 5,
               itemBuilder: (_, i) => Card(
                 child: ListTile(
-                  title: Text('Nota $i'),
-                  subtitle: const Text('Pré-visualização do corpo...'),
+                  title: Text('Note $i'),
+                  subtitle: const Text('Preview of the body...'),
                 ),
               ),
             ),
