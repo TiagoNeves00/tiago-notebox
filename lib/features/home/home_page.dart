@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notebox/features/home/providers/view_mode.dart';
 import 'package:notebox/features/home/widgets/folder_carousel.dart';
+import 'package:notebox/features/home/widgets/note_list_mock.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
 class HomePage extends ConsumerWidget {
@@ -13,8 +15,13 @@ class HomePage extends ConsumerWidget {
         title: const Text('NoteBox'),
         actions: [
           IconButton(
-            onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
             icon: const Icon(Icons.brightness_6),
+            onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
+          ),
+          IconButton(
+            icon: Icon(ref.watch(gridModeProvider) ? Icons.view_list : Icons.grid_view),
+            onPressed: () => ref.read(gridModeProvider.notifier).state =
+              !ref.read(gridModeProvider),
           ),
         ],
       ),
@@ -47,13 +54,11 @@ class HomePage extends ConsumerWidget {
           const FolderCarousel(),
           const SizedBox(height: 8),
           Expanded(
-            child: ListView.builder(
-              itemCount: 5,
-              itemBuilder: (_, i) => Card(
-                child: ListTile(
-                  title: Text('Note $i'),
-                  subtitle: const Text('Preview of the body...'),
-                ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: NoteListMock(
+                key: ValueKey(ref.watch(gridModeProvider)),
+                grid: ref.watch(gridModeProvider),
               ),
             ),
           ),
