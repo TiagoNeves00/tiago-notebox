@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notebox/features/home/providers/notes_provider.dart';
 import 'package:notebox/features/home/providers/view_mode.dart';
 import 'package:notebox/features/home/widgets/folder_carousel.dart';
-import 'package:notebox/features/home/widgets/note_list_mock.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
 class HomePage extends ConsumerWidget {
@@ -19,9 +19,11 @@ class HomePage extends ConsumerWidget {
             onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
           ),
           IconButton(
-            icon: Icon(ref.watch(gridModeProvider) ? Icons.view_list : Icons.grid_view),
-            onPressed: () => ref.read(gridModeProvider.notifier).state =
-              !ref.read(gridModeProvider),
+            icon: Icon(
+              ref.watch(gridModeProvider) ? Icons.view_list : Icons.grid_view,
+            ),
+            onPressed: () => ref.read(gridModeProvider.notifier).state = !ref
+                .read(gridModeProvider),
           ),
         ],
       ),
@@ -37,6 +39,8 @@ class HomePage extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              onChanged: (v) =>
+                  ref.read(searchQueryProvider.notifier).state = v,
             ),
           ),
           SizedBox(
@@ -44,9 +48,18 @@ class HomePage extends ConsumerWidget {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: const [
-                Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Chip(label: Text('All'))),
-                Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Chip(label: Text('Work'))),
-                Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Chip(label: Text('Personal'))),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Chip(label: Text('All')),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Chip(label: Text('Work')),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Chip(label: Text('Personal')),
+                ),
               ],
             ),
           ),
@@ -54,13 +67,37 @@ class HomePage extends ConsumerWidget {
           const FolderCarousel(),
           const SizedBox(height: 8),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: NoteListMock(
-                key: ValueKey(ref.watch(gridModeProvider)),
-                grid: ref.watch(gridModeProvider),
-              ),
-            ),
+            child: ref
+                .watch(notesProvider)
+                .when(
+                  data: (notes) {
+                    if (notes.isEmpty) {
+                      return const Center(child: Text('Sem notas ainda'));
+                    }
+                    return ListView.builder(
+                      itemCount: notes.length,
+                      itemBuilder: (_, i) {
+                        final n = notes[i];
+                        return Card(
+                          child: ListTile(
+                            title: Text(n.title),
+                            subtitle: Text(
+                              n.body,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: n.isFavorite
+                                ? const Icon(Icons.star)
+                                : null,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Erro: $e')),
+                ),
           ),
         ],
       ),
