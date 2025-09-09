@@ -1,76 +1,41 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notebox/features/home_page.dart';
+import 'package:notebox/theme/app_colors.dart';
+import 'package:notebox/theme/theme_mode.dart';
 
-/// Provider de ThemeMode controlado por StateNotifier.
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
-  return ThemeModeNotifier();
-});
 
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system);
-
-  void toggle() {
-    // alterna entre claro/escuro; ignora o modo system após o primeiro toggle
-    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-  }
-
-  void set(ThemeMode mode) => state = mode;
-}
 
 class NoteBoxApp extends ConsumerWidget {
   const NoteBoxApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-
-    return MaterialApp(
-      title: 'NoteBox',
-      debugShowCheckedModeBanner: false,
-      themeMode: themeMode,
-      theme: ThemeData(
+    final mode = ref.watch(themeModeProvider);
+    return DynamicColorBuilder(builder: (lightDyn, darkDyn) {
+      final light = ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
+        colorScheme: lightDyn ??
+            ColorScheme.fromSeed(seedColor: AppColors.light.brand),
+        extensions: const [AppColors.light],
+      );
+      final dark = ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-        brightness: Brightness.dark,
-      ),
-      home: const HomePage(),
-    );
-  }
-}
-
-class HomePage extends ConsumerWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('NoteBox'),
-        actions: [
-          Switch(
-            value: isDark,
-            onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Text(
-          'Bem-vindo ao NoteBox!!',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-      ),
-    );
+        colorScheme: darkDyn ??
+            ColorScheme.fromSeed(
+              seedColor: AppColors.dark.brand,
+              brightness: Brightness.dark,
+            ),
+        extensions: const [AppColors.dark],
+      );
+      return MaterialApp(
+        title: 'NoteBox',
+        theme: light,
+        darkTheme: dark,
+        themeMode: mode,
+        home: const HomePage(),
+      );
+    });
   }
 }
