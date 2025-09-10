@@ -63,17 +63,36 @@ class HomePage extends ConsumerWidget {
                       itemCount: notes.length,
                       itemBuilder: (_, i) {
                         final n = notes[i];
+                        final c = n.color != null
+                            ? Color(n.color!)
+                            : Theme.of(context).colorScheme.outlineVariant;
                         return Card(
-                          child: ListTile(
-                            title: Text(n.title),
-                            subtitle: Text(
-                              n.body,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: c, width: 1.5),
+                          ),
+                          child: InkWell(
+                            onTap: () => context.push('/edit/${n.id}'),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    n.title,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    n.body,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
-                            trailing: n.isFavorite
-                                ? const Icon(Icons.star)
-                                : null,
                           ),
                         );
                       },
@@ -89,9 +108,7 @@ class HomePage extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/edit'),
         child: const Icon(Icons.add),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(32),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
       ),
     );
   }
