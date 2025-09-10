@@ -5,8 +5,9 @@ class NoteDraft {
   String title;
   String body;
   int? color;
+  int? folderId;
 
-  NoteDraft({this.title = '', this.body = '', this.color});
+  NoteDraft({this.title = '', this.body = '', this.color, this.folderId});
 }
 
 class EditorCtrl extends Notifier<NoteDraft> {
@@ -21,10 +22,10 @@ class EditorCtrl extends Notifier<NoteDraft> {
     _redo.clear();
   }
 
-  void set({String? title, String? body, int? color}) {
-    _undo.add(NoteDraft(title: state.title, body: state.body, color: state.color));
+  void set({String? title, String? body, int? color, int? folderId}) {
+    _undo.add(NoteDraft(title: state.title, body: state.body, color: state.color, folderId: state.folderId));
     _redo.clear();
-    state = NoteDraft(title: title ?? state.title, body: body ?? state.body, color: color ?? state.color);
+    state = NoteDraft(title: title ?? state.title, body: body ?? state.body, color: color ?? state.color, folderId: folderId ?? state.folderId);
   }
 
   void undo(){ if(_undo.isEmpty)return;
@@ -33,7 +34,7 @@ class EditorCtrl extends Notifier<NoteDraft> {
   void redo(){ if(_redo.isEmpty)return;
     _undo.add(state); state=_redo.removeLast(); }
   
-  String snapshotJson()=>jsonEncode({'title':state.title,'body':state.body,'color':state.color});
+  String snapshotJson()=>jsonEncode({'title':state.title,'body':state.body,'color':state.color, 'folderId':state.folderId});
 }
 final editorProvider=NotifierProvider<EditorCtrl,NoteDraft>(EditorCtrl.new);
 
