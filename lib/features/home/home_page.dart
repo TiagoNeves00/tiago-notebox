@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notebox/data/local/db.dart';
+import 'package:notebox/data/repos/folders_repo.dart';
+import 'package:notebox/data/repos/tags_repo.dart';
+import 'package:notebox/dev/dev_seed.dart';
+import 'package:notebox/features/home/providers/filters.dart';
 import 'package:notebox/features/home/providers/notes_provider.dart';
-import 'package:notebox/features/home/providers/view_mode.dart';
 import 'package:notebox/features/home/widgets/folder_carousel.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
@@ -19,11 +23,9 @@ class HomePage extends ConsumerWidget {
             onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
           ),
           IconButton(
-            icon: Icon(
-              ref.watch(gridModeProvider) ? Icons.view_list : Icons.grid_view,
-            ),
-            onPressed: () => ref.read(gridModeProvider.notifier).state = !ref
-                .read(gridModeProvider),
+            icon: const Icon(Icons.bolt),
+            tooltip: 'DEV seed',
+            onPressed: () => runDevSeed(ref, force: true),
           ),
         ],
       ),
@@ -43,29 +45,13 @@ class HomePage extends ConsumerWidget {
                   ref.read(searchQueryProvider.notifier).state = v,
             ),
           ),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: const [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4),
-                  child: Chip(label: Text('All')),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4),
-                  child: Chip(label: Text('Work')),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4),
-                  child: Chip(label: Text('Personal')),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
           const FolderCarousel(),
           const SizedBox(height: 8),
+
+          const _FoldersChips(),
+          const SizedBox(height: 8),
+          const _TagsChips(),
+
           Expanded(
             child: ref
                 .watch(notesProvider)
@@ -104,6 +90,93 @@ class HomePage extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class _FoldersChips extends ConsumerWidget {
+  const _FoldersChips();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stream = ref.watch(foldersRepoProvider).watchAll();
+    final sel = ref.watch(selectedFolderIdProvider);
+    return SizedBox(
+      height: 40,
+      child: StreamBuilder<List<Folder>>(
+        stream: stream,
+        builder: (context, snap) {
+          final items = snap.data ?? const <Folder>[];
+          return ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: ChoiceChip(
+                  label: const Text('Todas'),
+                  selected: sel == null,
+                  onSelected: (_) =>
+                      ref.read(selectedFolderIdProvider.notifier).state = null,
+                ),
+              ),
+              for (final f in items)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: ChoiceChip(
+                    label: Text(f.name),
+                    selected: sel == f.id,
+                    onSelected: (_) =>
+                        ref.read(selectedFolderIdProvider.notifier).state =
+                            f.id,
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TagsChips extends ConsumerWidget {
+  const _TagsChips();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stream = ref.watch(tagsRepoProvider).watchAll();
+    final sel = ref.watch(selectedTagIdProvider);
+    return SizedBox(
+      height: 40,
+      child: StreamBuilder<List<Tag>>(
+        stream: stream,
+        builder: (context, snap) {
+          final items = snap.data ?? const <Tag>[];
+          return ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: ChoiceChip(
+                  label: const Text('Sem tag'),
+                  selected: sel == null,
+                  onSelected: (_) =>
+                      ref.read(selectedTagIdProvider.notifier).state = null,
+                ),
+              ),
+              for (final t in items)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: ChoiceChip(
+                    label: Text('#${t.name}'),
+                    selected: sel == t.id,
+                    onSelected: (_) =>
+                        ref.read(selectedTagIdProvider.notifier).state = t.id,
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

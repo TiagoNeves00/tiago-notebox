@@ -1,5 +1,3 @@
-
-
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notebox/data/local/db.dart';
@@ -10,25 +8,35 @@ class NotesRepo {
   NotesRepo(this.db);
 
   Stream<List<Note>> watchAll({int? folderId, int? tagId, String? query}) {
-    final q = db.select(db.notes)
+    final base = db.select(db.notes)
       ..orderBy([
-        (tbl) => OrderingTerm(expression: tbl.isFavorite, mode: OrderingMode.desc),
-        (tbl) => OrderingTerm(expression: tbl.updatedAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.isFavorite, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
       ]);
-    if (folderId != null) {
-      q.where((n) => n.folderId.equals(folderId));
-    }
+    if (folderId != null) base.where((n) => n.folderId.equals(folderId));
     if (query != null && query.isNotEmpty) {
-      // FTS5 query simplificada: procurar em title/body
-      q.where((n) =>
-          n.title.like('%$query%') | n.body.like('%$query%'));
+      base.where((n) => n.title.like('%$query%') | n.body.like('%$query%'));
     }
-    return q.watch();
+    if (tagId == null) return base.watch();
+
+    final joined = base.join([
+      innerJoin(db.noteTags, db.noteTags.noteId.equalsExp(db.notes.id)),
+    ])..where(db.noteTags.tagId.equals(tagId));
+
+    return joined.watch().map(
+      (rows) => rows.map((r) => r.readTable(db.notes)).toList(),
+    );
   }
 
   Future<int> add(String title, String body, {int? folderId}) {
-    return db.into(db.notes).insert(
-          NotesCompanion.insert(title: title, body: body, folderId: Value(folderId)),
+    return db
+        .into(db.notes)
+        .insert(
+          NotesCompanion.insert(
+            title: title,
+            body: body,
+            folderId: Value(folderId),
+          ),
         );
   }
 }
