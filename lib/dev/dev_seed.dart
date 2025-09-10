@@ -40,8 +40,12 @@ Future<void> runDevSeed(WidgetRef ref, {bool force = false}) async {
   final n3 = await db.into(db.notes).insert(NotesCompanion.insert(title: 'Resumo artigo', body: 'Notas de estudo...', folderId: Value(estudosId)));
   final n4 = await db.into(db.notes).insert(NotesCompanion.insert(title: 'Ideias app', body: 'Widgets, grelha, busca', folderId: Value(workId)));
   final n5 = await db.into(db.notes).insert(NotesCompanion.insert(title: 'Treino', body: 'Push/Pull/Legs', folderId: Value(pessoalId), isFavorite: const Value(true)));
+  final n6 = await db.into(db.notes).insert(NotesCompanion.insert(title: 'Viagem', body: 'Reservar hotel, voo, carro', folderId: Value(pessoalId)));
 
   await db.into(db.noteTags).insert(NoteTagsCompanion.insert(noteId: n1, tagId: urgenteId));
+  await db.into(db.noteTags).insert(NoteTagsCompanion.insert(noteId: n2, tagId: urgenteId));
   await db.into(db.noteTags).insert(NoteTagsCompanion.insert(noteId: n3, tagId: ideiaId));
   await db.into(db.noteTags).insert(NoteTagsCompanion.insert(noteId: n4, tagId: ideiaId));
+  await db.into(db.noteTags).insert(NoteTagsCompanion.insert(noteId: n5, tagId: urgenteId));
+  await db.into(db.noteTags).insert(NoteTagsCompanion.insert(noteId: n6, tagId: urgenteId));
 }

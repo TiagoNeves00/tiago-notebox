@@ -39,6 +39,17 @@ class NotesRepo {
           ),
         );
   }
+
+  Future<int> upsert({int? id, required String title, required String body, int? color, int? folderId}) async {
+    if (id==null) {
+      return db.into(db.notes).insert(NotesCompanion.insert(
+        title: title, body: body, color: Value(color), folderId: Value(folderId)));
+    } else {
+      await (db.update(db.notes)..where((t)=>t.id.equals(id))).write(
+        NotesCompanion(title: Value(title), body: Value(body), color: Value(color)));
+      return id;
+    }
+  }
 }
 
 final notesRepoProvider = Provider<NotesRepo>((ref) {

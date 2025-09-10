@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:notebox/data/local/db.dart';
 import 'package:notebox/data/repos/folders_repo.dart';
 import 'package:notebox/data/repos/tags_repo.dart';
@@ -88,8 +89,11 @@ class HomePage extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => context.push('/edit'),
         child: const Icon(Icons.add),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(32),
+        ),
       ),
     );
   }
