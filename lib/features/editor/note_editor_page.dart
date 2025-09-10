@@ -88,7 +88,11 @@ class _S extends ConsumerState<NoteEditorPage> {
                             )
                             .toList(),
                         onChanged: (v) {
-                          ctrl.set(color: st.color, title: st.title, body: st.body);
+                          ctrl.set(
+                            color: st.color,
+                            title: st.title,
+                            body: st.body,
+                          );
                           ctrl.set(folderId: v);
                         },
                       ),
@@ -175,17 +179,20 @@ class _S extends ConsumerState<NoteEditorPage> {
     final t = ref.read(editorProvider).body;
     final lines = t.split('\n');
     if (lines.isEmpty) {
-      ctrl.set(body: '- [ ] ');
+      ctrl.set(body: '☑️ ');
       return;
     }
     final i = lines.length - 1;
-    final L = lines[i];
-    final toggled = L.startsWith('- [ ] ')
-        ? '- [x] ${L.substring(6)}'
-        : L.startsWith('- [x] ')
-        ? '- [ ] ${L.substring(6)}'
-        : '- [ ] $L';
-    lines[i] = toggled;
+    final L = lines[i].trimLeft();
+    String toggled;
+    if (L.startsWith('☑️ ')) {
+      toggled = L.replaceFirst('☑️ ', '🟪 ');
+    } else if (L.startsWith('🟪 ')) {
+      toggled = L.replaceFirst('🟪 ', '☑️ ');
+    } else {
+      toggled = '☑️ ${L.isEmpty ? '' : L}';
+    }
+    lines[i] = lines[i].replaceFirst(lines[i].trimLeft(), toggled);
     ctrl.set(body: lines.join('\n'));
   }
 
