@@ -19,7 +19,27 @@ class _S extends ConsumerState<NoteEditorPage> {
   @override
   void initState() {
     super.initState();
-    // load existente no futuro; por agora fica vazio
+    if (widget.noteId != null) {
+      final db = ref.read(dbProvider);
+      Future(() async {
+        final n = await (db.select(
+          db.notes,
+        )..where((t) => t.id.equals(widget.noteId!))).getSingle();
+
+        ref
+            .read(editorProvider.notifier)
+            .load(
+              NoteDraft(
+                title: n.title,
+                body: n.body,
+                color: n.color,
+                folderId: n.folderId,
+              ),
+            );
+
+        setState(() {}); // força rebuild inicial
+      });
+    }
   }
 
   @override
@@ -55,6 +75,7 @@ class _S extends ConsumerState<NoteEditorPage> {
                     title: st.title,
                     body: st.body,
                     color: st.color,
+                    folderId: st.folderId,
                   );
               await ref
                   .read(revisionsRepoProvider)
@@ -92,6 +113,7 @@ class _S extends ConsumerState<NoteEditorPage> {
                             color: st.color,
                             title: st.title,
                             body: st.body,
+                            folderId: v,
                           );
                           ctrl.set(folderId: v);
                         },
