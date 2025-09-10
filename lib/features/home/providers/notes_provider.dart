@@ -8,6 +8,5 @@ final notesProvider = StreamProvider.autoDispose((ref) {
   final repo = ref.watch(notesRepoProvider);
   final query = ref.watch(searchQueryProvider);
   final folderId = ref.watch(selectedFolderIdProvider);
-  final tagId = ref.watch(selectedTagIdProvider);
-  return repo.watchAll(folderId: folderId, tagId: tagId, query: query);
+  return repo.watchAll(folderId: folderId, query: query);
 });

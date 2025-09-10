@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:notebox/data/local/db.dart';
 import 'package:notebox/data/repos/folders_repo.dart';
-import 'package:notebox/data/repos/tags_repo.dart';
 import 'package:notebox/dev/dev_seed.dart';
 import 'package:notebox/features/home/providers/filters.dart';
 import 'package:notebox/features/home/providers/notes_provider.dart';
@@ -51,7 +50,6 @@ class HomePage extends ConsumerWidget {
 
           const _FoldersChips(),
           const SizedBox(height: 8),
-          const _TagsChips(),
 
           Expanded(
             child: ref
@@ -133,49 +131,6 @@ class _FoldersChips extends ConsumerWidget {
                     onSelected: (_) =>
                         ref.read(selectedFolderIdProvider.notifier).state =
                             f.id,
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _TagsChips extends ConsumerWidget {
-  const _TagsChips();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final stream = ref.watch(tagsRepoProvider).watchAll();
-    final sel = ref.watch(selectedTagIdProvider);
-    return SizedBox(
-      height: 40,
-      child: StreamBuilder<List<Tag>>(
-        stream: stream,
-        builder: (context, snap) {
-          final items = snap.data ?? const <Tag>[];
-          return ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: ChoiceChip(
-                  label: const Text('Sem tag'),
-                  selected: sel == null,
-                  onSelected: (_) =>
-                      ref.read(selectedTagIdProvider.notifier).state = null,
-                ),
-              ),
-              for (final t in items)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: ChoiceChip(
-                    label: Text('#${t.name}'),
-                    selected: sel == t.id,
-                    onSelected: (_) =>
-                        ref.read(selectedTagIdProvider.notifier).state = t.id,
                   ),
                 ),
             ],
