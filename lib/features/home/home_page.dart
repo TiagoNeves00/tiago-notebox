@@ -7,6 +7,7 @@ import 'package:notebox/dev/dev_seed.dart';
 import 'package:notebox/features/home/providers/filters.dart';
 import 'package:notebox/features/home/providers/notes_provider.dart';
 import 'package:notebox/features/home/widgets/folder_carousel.dart';
+import 'package:notebox/features/home/widgets/note_grid.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
 class HomePage extends ConsumerWidget {
@@ -55,49 +56,9 @@ class HomePage extends ConsumerWidget {
             child: ref
                 .watch(notesProvider)
                 .when(
-                  data: (notes) {
-                    if (notes.isEmpty) {
-                      return const Center(child: Text('Sem notas ainda'));
-                    }
-                    return ListView.builder(
-                      itemCount: notes.length,
-                      itemBuilder: (_, i) {
-                        final n = notes[i];
-                        final c = n.color != null
-                            ? Color(n.color!)
-                            : Theme.of(context).colorScheme.outlineVariant;
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(color: c, width: 1.5),
-                          ),
-                          child: InkWell(
-                            onTap: () => context.push('/edit/${n.id}'),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    n.title,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    n.body,
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                  data: (notes) => notes.isEmpty
+                      ? const Center(child: Text('Sem notas'))
+                      : NoteGrid(notes: notes),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('Erro: $e')),

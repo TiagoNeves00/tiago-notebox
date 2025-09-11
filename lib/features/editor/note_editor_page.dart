@@ -16,6 +16,7 @@ class NoteEditorPage extends ConsumerStatefulWidget {
 
 class _S extends ConsumerState<NoteEditorPage> {
   final _title = TextEditingController(), _body = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -25,7 +26,6 @@ class _S extends ConsumerState<NoteEditorPage> {
         final n = await (db.select(
           db.notes,
         )..where((t) => t.id.equals(widget.noteId!))).getSingle();
-
         ref
             .read(editorProvider.notifier)
             .load(
@@ -36,25 +36,18 @@ class _S extends ConsumerState<NoteEditorPage> {
                 folderId: n.folderId,
               ),
             );
-
-        setState(() {}); // força rebuild inicial
+        if (mounted) setState(() {});
       });
     }
   }
 
   @override
-  Widget build(BuildContext c) {
+  Widget build(BuildContext context) {
     final st = ref.watch(editorProvider);
     final ctrl = ref.read(editorProvider.notifier);
-    final foldersStream = ref.watch(foldersRepoProvider).watchAll();
-    _title.value = _title.value.copyWith(
-      text: st.title,
-      selection: _title.selection,
-    );
-    _body.value = _body.value.copyWith(
-      text: st.body,
-      selection: _body.selection,
-    );
+    _title.value = _title.value.copyWith(text: st.title);
+    _body.value = _body.value.copyWith(text: st.body);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.noteId == null ? 'Nova nota' : 'Editar nota'),
@@ -63,7 +56,7 @@ class _S extends ConsumerState<NoteEditorPage> {
           IconButton(icon: const Icon(Icons.redo), onPressed: ctrl.redo),
           IconButton(
             icon: const Icon(Icons.palette),
-            onPressed: () => _pickColor(c, ctrl),
+            onPressed: () => _pickColor(context, ctrl),
           ),
           IconButton(
             icon: const Icon(Icons.save),
@@ -80,7 +73,7 @@ class _S extends ConsumerState<NoteEditorPage> {
               await ref
                   .read(revisionsRepoProvider)
                   .add(id, ctrl.snapshotJson());
-              if (mounted) Navigator.pop(c);
+              if (mounted) Navigator.pop(context);
             },
           ),
         ],
@@ -89,78 +82,16 @@ class _S extends ConsumerState<NoteEditorPage> {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            StreamBuilder(
-              stream: foldersStream,
-              builder: (c, snap) {
-                final items = snap.data ?? [];
-                return Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButton<int?>(
-                        isExpanded: true,
-                        value: st.folderId,
-                        hint: const Text('Seleciona pasta'),
-                        items: items
-                            .map(
-                              (f) => DropdownMenuItem(
-                                value: f.id,
-                                child: Text(f.name),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          ctrl.set(
-                            color: st.color,
-                            title: st.title,
-                            body: st.body,
-                            folderId: v,
-                          );
-                          ctrl.set(folderId: v);
-                        },
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () async {
-                        final name = await showModalBottomSheet<String>(
-                          context: c,
-                          builder: (_) {
-                            final tc = TextEditingController();
-                            return Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(
-                                    controller: tc,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Nova pasta',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  FilledButton(
-                                    onPressed: () =>
-                                        Navigator.pop(c, tc.text.trim()),
-                                    child: const Text('Criar'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                        if (name != null && name.isNotEmpty) {
-                          // cria pasta e seleciona
-                          final db = ref.read(dbProvider);
-                          final id = await db
-                              .into(db.folders)
-                              .insert(FoldersCompanion.insert(name: name));
-                          ctrl.set(folderId: id);
-                        }
-                      },
-                    ),
-                  ],
-                );
-              },
+            FilledButton.tonal(
+              onPressed: () => _pickFolder(context),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  st.folderId == null
+                      ? 'Seleciona pasta'
+                      : 'Pasta #${st.folderId}',
+                ),
+              ),
             ),
             TextField(
               controller: _title,
@@ -197,6 +128,61 @@ class _S extends ConsumerState<NoteEditorPage> {
     );
   }
 
+  Future<void> _pickFolder(BuildContext context) async {
+  final repo = ref.read(foldersRepoProvider);
+  final folders = await repo.watchAll().first;
+  final current = ref.read(editorProvider).folderId;
+
+  final chosen = await showModalBottomSheet<int?>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetCtx) => SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          const ListTile(title: Text('Escolhe a pasta')),
+          RadioListTile<int?>(
+            value: null, groupValue: current, title: const Text('Sem pasta'),
+            onChanged: (v) => Navigator.pop(sheetCtx, v),
+          ),
+          ...folders.map((f) => RadioListTile<int?>(
+                value: f.id, groupValue: current, title: Text(f.name),
+                onChanged: (v) => Navigator.pop(sheetCtx, v),
+              )),
+          ListTile(
+            leading: const Icon(Icons.add), title: const Text('Criar pasta'),
+            onTap: () async {
+              final id = await _createFolder(sheetCtx);
+              if (id != null) Navigator.pop(sheetCtx, id);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+
+  if (!mounted) return;
+  ref.read(editorProvider.notifier).set(folderId: chosen);
+}
+
+Future<int?> _createFolder(BuildContext ctx) async {
+  final tc = TextEditingController();
+  final name = await showModalBottomSheet<String>(
+    context: ctx,
+    builder: (createCtx) => Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: tc, decoration: const InputDecoration(labelText: 'Nome da pasta')),
+        const SizedBox(height: 12),
+        FilledButton(onPressed: () => Navigator.pop(createCtx, tc.text.trim()), child: const Text('Criar')),
+      ]),
+    ),
+  );
+  if (name == null || name.isEmpty) return null;
+  final db = ref.read(dbProvider);
+  return db.into(db.folders).insert(FoldersCompanion.insert(name: name));
+}
+
   void _toggleChecklist(EditorCtrl ctrl) {
     final t = ref.read(editorProvider).body;
     final lines = t.split('\n');
@@ -212,38 +198,23 @@ class _S extends ConsumerState<NoteEditorPage> {
     } else if (L.startsWith('🟪 ')) {
       toggled = L.replaceFirst('🟪 ', '☑️ ');
     } else {
-      toggled = '☑️ ${L.isEmpty ? '' : L}';
+      toggled = '🟪 ${L.isEmpty ? '' : L}';
     }
     lines[i] = lines[i].replaceFirst(lines[i].trimLeft(), toggled);
     ctrl.set(body: lines.join('\n'));
   }
 
-  void _pickColor(BuildContext c, EditorCtrl ctrl) {
-    final colors = [
-      0xFFFFF59D,
-      0xFFC8E6C9,
-      0xFFB3E5FC,
-      0xFFD1C4E9,
-      0xFFFFCCBC,
-      0xFFFFFDE7,
-    ];
-    showModalBottomSheet<void>(
-      context: c,
-      builder: (_) => GridView.count(
-        crossAxisCount: 6,
-        padding: const EdgeInsets.all(12),
-        children: colors
-            .map(
-              (v) => InkWell(
-                onTap: () {
-                  ctrl.set(color: v);
-                  Navigator.pop(c);
-                },
-                child: Card(color: Color(v)),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
+  void _pickColor(BuildContext ctx, EditorCtrl ctrl){
+  final colors = [0xFFFFF59D,0xFFC8E6C9,0xFFB3E5FC,0xFFD1C4E9,0xFFFFCCBC,0xFFFFFDE7];
+  showModalBottomSheet(
+    context: ctx,
+    builder: (sheetCtx) => GridView.count(
+      crossAxisCount: 6, padding: const EdgeInsets.all(12),
+      children: colors.map((v) => InkWell(
+        onTap: () { ctrl.set(color: v); Navigator.pop(sheetCtx); },
+        child: Card(color: Color(v)),
+      )).toList(),
+    ),
+  );
+}
 }
