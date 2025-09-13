@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:notebox/data/local/db.dart';
 import 'package:notebox/data/local/db_provider.dart';
 import 'package:notebox/data/repos/folders_repo.dart';
 import 'package:notebox/data/repos/notes_repo.dart';
 import 'package:notebox/data/repos/revisions_repo.dart';
+import 'package:notebox/features/editor/editor_baseline.dart';
 import 'package:notebox/features/editor/editor_ctrl.dart';
 import 'package:notebox/features/home/providers/folder_colors.dart';
 
@@ -30,25 +30,28 @@ class _S extends ConsumerState<NoteEditorPage> {
         final n = await (db.select(
           db.notes,
         )..where((t) => t.id.equals(widget.noteId!))).getSingle();
-        ref
-            .read(editorProvider.notifier)
-            .load(
-              NoteDraft(
-                title: n.title,
-                body: n.body,
-                color: n.color,
-                folderId: n.folderId,
-              ),
-            );
+        final d = NoteDraft(
+          title: n.title,
+          body: n.body,
+          color: n.color,
+          folderId: n.folderId,
+        );
+        ref.read(editorProvider.notifier).load(d);
+        ref.read(editorBaselineProvider.notifier).state = d;
         if (mounted) setState(() {});
       });
+    } else {
+      // nova nota
+      final d = NoteDraft();
+      ref.read(editorBaselineProvider.notifier).state = d;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final st = ref.watch(editorProvider);
-    final ctrl = ref.read(editorProvider.notifier);
+    final base = ref.watch(editorBaselineProvider);
+    final dirty = isDirty(st, base);
 
     _title.value = _title.value.copyWith(
       text: st.title,
@@ -59,77 +62,100 @@ class _S extends ConsumerState<NoteEditorPage> {
       selection: _body.selection,
     );
 
-    return Container(
-      color: st.color != null ? Color(st.color!).withOpacity(.06) : null,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            // Toolbar local (undo/redo/palette/save)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(icon: const Icon(Icons.undo), onPressed: ctrl.undo),
-                IconButton(icon: const Icon(Icons.redo), onPressed: ctrl.redo),
-                IconButton(
-                  icon: const Icon(Icons.palette),
-                  onPressed: () => _pickColor(context, ctrl),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.save),
-                  onPressed: () async {
-                    final id = await ref
-                        .read(notesRepoProvider)
-                        .upsert(
-                          id: widget.noteId,
-                          title: st.title,
-                          body: st.body,
-                          color: st.color,
-                          folderId: st.folderId,
-                        );
-                    await ref
-                        .read(revisionsRepoProvider)
-                        .add(id, _snapshotJson(st));
-                    if (context.mounted) context.pop();
-                  },
-                ),
-              ],
-            ),
-            // Seletor de pasta
-            _FolderButton(st.folderId),
-            const SizedBox(height: 8),
-            // Título
-            TextField(
-              controller: _title,
-              decoration: const InputDecoration(
-                hintText: 'Título',
-                border: InputBorder.none,
+    Future<void> saveAndClose() async {
+      final id = await ref
+          .read(notesRepoProvider)
+          .upsert(
+            id: widget.noteId,
+            title: st.title,
+            body: st.body,
+            color: st.color,
+            folderId: st.folderId,
+          );
+      await ref.read(revisionsRepoProvider).add(id, _snapshotJson(st));
+      ref.read(editorBaselineProvider.notifier).state = st; // marcou como limpo
+    }
+
+    return WillPopScope(
+      onWillPop: () async {
+        if (isDirty(
+          ref.read(editorProvider),
+          ref.read(editorBaselineProvider),
+        )) {
+          await saveAndClose();
+        }
+        return true;
+      },
+      child: Container(
+        color: st.color != null ? Color(st.color!).withOpacity(.06) : null,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              // Primeira linha: Pasta + ✓
+              Row(
+                children: [
+                  const Text('Pasta: '),
+                  Expanded(child: _FolderButton(st.folderId)),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: 'Guardar',
+                    onPressed: dirty
+                        ? () async {
+                            await saveAndClose();
+                            if (mounted) Navigator.of(context).maybePop();
+                          }
+                        : null,
+                    icon: const Icon(Icons.check_circle),
+                    color: dirty ? Theme.of(context).colorScheme.primary : null,
+                  ),
+                ],
               ),
-              onChanged: (v) => ctrl.set(title: v),
-            ),
-            // Corpo
-            Expanded(
-              child: TextField(
-                controller: _body,
-                maxLines: null,
+              const SizedBox(height: 8),
+                // Título
+                TextField(
+                controller: _title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
                 decoration: const InputDecoration(
-                  hintText: 'Escreve…',
+                  hintText: 'Título',
                   border: InputBorder.none,
                 ),
-                onChanged: (v) => ctrl.set(body: v),
+                onChanged: (v) =>
+                  ref.read(editorProvider.notifier).set(title: v),
+                ),
+
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              // Corpo
+              Expanded(
+                child: TextField(
+                  controller: _body,
+                  maxLines: null,
+                  decoration: const InputDecoration(
+                    hintText: 'Escreve…',
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (v) =>
+                      ref.read(editorProvider.notifier).set(body: v),
+                ),
               ),
-            ),
-            // Checklist
-            Row(
-              children: [
-                TextButton.icon(
+              // Checklist
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
                   icon: const Icon(Icons.check_box_outlined),
                   label: const Text('Checklist'),
-                  onPressed: () => _toggleChecklist(ctrl),
+                  onPressed: () =>
+                      _toggleChecklist(ref.read(editorProvider.notifier)),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -161,36 +187,6 @@ class _S extends ConsumerState<NoteEditorPage> {
     }
     lines[i] = lines[i].replaceFirst(lines[i].trimLeft(), toggled);
     ctrl.set(body: lines.join('\n'));
-  }
-
-  void _pickColor(BuildContext c, EditorCtrl ctrl) {
-    final colors = [
-      0xFFFFF59D,
-      0xFFC8E6C9,
-      0xFFB3E5FC,
-      0xFFD1C4E9,
-      0xFFFFCCBC,
-      0xFFFFFDE7,
-    ];
-    showModalBottomSheet<void>(
-      context: c,
-      showDragHandle: true,
-      builder: (_) => GridView.count(
-        crossAxisCount: 6,
-        padding: const EdgeInsets.all(12),
-        children: colors
-            .map(
-              (v) => InkWell(
-                onTap: () {
-                  ctrl.set(color: v);
-                  Navigator.pop(c);
-                },
-                child: Card(color: Color(v)),
-              ),
-            )
-            .toList(),
-      ),
-    );
   }
 }
 

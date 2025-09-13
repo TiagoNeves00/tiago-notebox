@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:notebox/app/notes_tasks_tabs.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
 class AppShell extends ConsumerWidget {
@@ -41,27 +42,7 @@ class AppShell extends ConsumerWidget {
                 },
               ),
         titleSpacing: 0,
-        title: isHome
-            ? Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: SegmentedButton<String>(
-                  showSelectedIcon: false,
-                  segments: const [
-                    ButtonSegment(value: 'notes', label: Text('Notes')),
-                    ButtonSegment(value: 'tasks', label: Text('Tasks')),
-                  ],
-                  selected: {isNotes ? 'notes' : 'tasks'},
-                  onSelectionChanged: (s) {
-                    final v = s.first;
-                    if (v == 'notes') {
-                      context.go('/notes');
-                    } else {
-                      context.go('/tasks');
-                    }
-                  },
-                ),
-              )
-            : Text(_titleFor(loc)),
+        title: isHome ? NotesTasksTabs(isNotes: isNotes) : Text(_titleFor(loc)),
         actions: isHome
             ? [
                 IconButton(

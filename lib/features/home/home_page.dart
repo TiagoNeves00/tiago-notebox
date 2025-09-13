@@ -14,7 +14,7 @@ class HomePage extends ConsumerWidget {
       children: [
         // Search
         Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(12),
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Search notes...',

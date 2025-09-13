@@ -15,7 +15,7 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color.withOpacity(0.35);
+    final bg = color.withOpacity(0.42);
 
     return Card(
       elevation: 0,
@@ -31,8 +31,8 @@ class NoteCard extends StatelessWidget {
             Container(
               width: 6,
               decoration: BoxDecoration(
-                color: color,
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+              color: Color.lerp(color, Colors.black, 0.1),
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
               ),
             ),
             // conteúdo
@@ -54,8 +54,8 @@ class NoteCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   const Divider(
                     color: Colors.black12,
-                    thickness: 1,
-                    height: 1,
+                    thickness: 1.5,
+                    height: 3,
                   ),
                   const SizedBox(height: 12),
                   Expanded(

@@ -22,14 +22,16 @@ class FolderChipsWrap extends ConsumerWidget {
       builder: (_, snap) {
         final items = snap.data ?? [];
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Wrap(
             spacing: 6,
             runSpacing: 6,
+            alignment: WrapAlignment.start,
             children: [
               ChoiceChip(
                 label: const Text('Todas'),
                 selected: selected == null,
+                showCheckmark: false,
                 onSelected: (_) =>
                     ref.read(selectedFolderIdProvider.notifier).state = null,
               ),
@@ -37,14 +39,15 @@ class FolderChipsWrap extends ConsumerWidget {
                 (f) => ChoiceChip(
                   label: Text(f.name),
                   selected: selected == f.id,
+                  showCheckmark: false,
                   selectedColor: (colorsMap[f.id] != null
-                      ? Color(colorsMap[f.id]!).withOpacity(.35)
+                      ? Color(colorsMap[f.id]!).withOpacity(.6)
                       : Theme.of(
                           context,
                         ).colorScheme.secondaryContainer.withOpacity(.35)),
                   avatar: colorsMap[f.id] != null
                       ? CircleAvatar(
-                          radius: 6,
+                          radius: 8,
                           backgroundColor: Color(colorsMap[f.id]!),
                         )
                       : null,

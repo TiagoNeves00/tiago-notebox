@@ -102,6 +102,15 @@ class FoldersPage extends ConsumerWidget {
                                             CircleAvatar(
                                               backgroundColor: Color(v),
                                               radius: 18,
+                                              child: Container(
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                color: Colors.black.withOpacity(0.15),
+                                                width: 2,
+                                                ),
+                                              ),
+                                              ),
                                             ),
                                             if (f.color == v)
                                               const Icon(
@@ -131,13 +140,24 @@ class FoldersPage extends ConsumerWidget {
                               );
                             }
                           },
-                          child: CircleAvatar(
-                            radius: 12,
-                            backgroundColor: f.color != null
-                                ? Color(f.color!)
-                                : Theme.of(context).colorScheme.outlineVariant,
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: f.color != null
+                                  ? Color(f.color!)
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                              border: Border.all(
+                                color: Colors.black.withOpacity(0.15),
+                                width: 2,
+                              ),
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 14),
                         IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed: () async {
