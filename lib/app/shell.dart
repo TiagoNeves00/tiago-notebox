@@ -17,13 +17,17 @@ class AppShell extends ConsumerWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
 
-  bool _isHome(String loc) =>
-      loc.startsWith('/notes') || loc.startsWith('/tasks');
+  bool _isHome(String loc) => loc.startsWith('/notes') || loc.startsWith('/tasks');
   String _titleFor(String loc) {
     if (loc.startsWith('/folders')) return 'Pastas';
     if (loc.startsWith('/settings')) return 'Settings';
     if (loc.startsWith('/edit')) return 'Nota';
     return '';
+  }
+
+  int? _editingIdFrom(String loc) {
+    final m = RegExp(r'^/edit/(\d+)').firstMatch(loc);
+    return m != null ? int.tryParse(m.group(1)!) : null;
   }
 
   @override
@@ -33,41 +37,28 @@ class AppShell extends ConsumerWidget {
     final isNotes = loc.startsWith('/notes');
     final isEdit = loc.startsWith('/edit');
 
+    // estado reativo do editor
+    final draft = ref.watch(editorProvider);
+    final base  = ref.watch(editorBaselineProvider);
+    final dirty = isDirty(draft, base);
+
     Future<void> saveEditorIfDirty() async {
-      final st = ref.read(editorProvider);
-      final base = ref.read(editorBaselineProvider);
-      final dirty = isDirty(st, base);
       if (!dirty) return;
-
-      // extrai id se existir em /edit/:id
-      int? id;
-      final segs = loc.split('/');
-      if (segs.length >= 3) {
-        final maybe = int.tryParse(segs.last);
-        if (maybe != null) id = maybe;
-      }
-
-      final savedId = await ref
-          .read(notesRepoProvider)
-          .upsert(
-            id: id,
-            title: st.title,
-            body: st.body,
-            color: st.color,
-            folderId: st.folderId,
-          );
-      await ref
-          .read(revisionsRepoProvider)
-          .add(
-            savedId,
-            jsonEncode({
-              'title': st.title,
-              'body': st.body,
-              'color': st.color,
-              'folderId': st.folderId,
-            }),
-          );
-      ref.read(editorBaselineProvider.notifier).state = st;
+      final id = _editingIdFrom(loc);
+      final savedId = await ref.read(notesRepoProvider).upsert(
+        id: id,
+        title: draft.title,
+        body: draft.body,
+        color: draft.color,
+        folderId: draft.folderId,
+      );
+      await ref.read(revisionsRepoProvider).add(savedId, jsonEncode({
+        'title': draft.title,
+        'body': draft.body,
+        'color': draft.color,
+        'folderId': draft.folderId,
+      }));
+      ref.read(editorBaselineProvider.notifier).state = draft;
     }
 
     return Scaffold(
@@ -92,8 +83,7 @@ class AppShell extends ConsumerWidget {
                 IconButton(
                   tooltip: 'Tema',
                   icon: const Icon(Icons.brightness_6),
-                  onPressed: () =>
-                      ref.read(themeModeProvider.notifier).toggle(),
+                  onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
                 ),
                 IconButton(
                   tooltip: 'Pastas',
@@ -107,20 +97,30 @@ class AppShell extends ConsumerWidget {
                 ),
               ]
             : (isEdit
-                  ? [
-                      const Padding(padding: EdgeInsets.only(right: 6)),
-                      const _FolderButtonSmall(),
-                      IconButton(
-                        tooltip: 'Guardar',
-                        icon: const Icon(Icons.check_circle_rounded),
-                        onPressed: () async {
-                          await saveEditorIfDirty();
-                          if (context.mounted) context.pop();
-                        },
+                ? [
+                    const Padding(
+                      padding: EdgeInsets.only(right: 6),
+                      child: Center(child: Text('Pasta:', style: TextStyle(fontSize: 14))),
+                    ),
+                    const _FolderButtonSmall(),
+                    IconButton(
+                      tooltip: 'Guardar',
+                      onPressed: dirty
+                          ? () async {
+                              await saveEditorIfDirty();
+                              if (context.mounted) context.pop();
+                            }
+                          : null,
+                      icon: Icon(
+                        Icons.check_circle_rounded,
+                        color: dirty
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(width: 4),
-                    ]
-                  : null),
+                    ),
+                    const SizedBox(width: 4),
+                  ]
+                : null),
       ),
       body: child,
     );
@@ -135,9 +135,9 @@ class _FolderButtonSmall extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentId = ref.watch(editorProvider).folderId;
     final folders$ = ref.watch(foldersRepoProvider).watchAll();
-    final colorsMap = ref
-        .watch(folderColorsProvider)
-        .maybeWhen(data: (m) => m, orElse: () => const <int, int?>{});
+    final colorsMap = ref.watch(folderColorsProvider).maybeWhen(
+      data: (m) => m, orElse: () => const <int, int?>{},
+    );
 
     return StreamBuilder<List<Folder>>(
       stream: folders$,
@@ -145,12 +145,10 @@ class _FolderButtonSmall extends ConsumerWidget {
         final folders = snap.data ?? const <Folder>[];
         final name = currentId == null
             ? 'Sem pasta'
-            : folders
-                  .firstWhere(
-                    (f) => f.id == currentId,
-                    orElse: () => Folder(id: -1, name: 'Pasta', order: 0),
-                  )
-                  .name;
+            : folders.firstWhere(
+                (f) => f.id == currentId,
+                orElse: () => Folder(id: -1, name: 'Pasta', order: 0),
+              ).name;
         final cInt = currentId != null ? colorsMap[currentId] : null;
         final color = cInt != null
             ? Color(cInt)
@@ -165,45 +163,33 @@ class _FolderButtonSmall extends ConsumerWidget {
               minimumSize: const Size(0, 36),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.folder_open_rounded,
-                  size: 22,
-                ), // Added icon here
-                const SizedBox(width: 4),
-                CircleAvatar(
-                  radius: 8,
-                  backgroundColor: color,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black, width: 1.2),
-                    ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              CircleAvatar(
+                radius: 8,
+                backgroundColor: color,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.black, width: 1.2),
                   ),
                 ),
-                const SizedBox(width: 6),
-                Text(name, overflow: TextOverflow.ellipsis),
-                const Icon(Icons.expand_more, size: 18),
-              ],
-            ),
+              ),
+              const SizedBox(width: 6),
+              Text(name, overflow: TextOverflow.ellipsis),
+              const Icon(Icons.expand_more, size: 18),
+            ]),
           ),
         );
       },
     );
   }
 
-  Future<void> _pickFolder(
-    BuildContext ctx,
-    WidgetRef ref,
-    int? currentId,
-  ) async {
+  Future<void> _pickFolder(BuildContext ctx, WidgetRef ref, int? currentId) async {
     final repo = ref.read(foldersRepoProvider);
     final folders = await repo.watchAll().first;
-    final colorsMap = ref
-        .read(folderColorsProvider)
-        .maybeWhen(data: (m) => m, orElse: () => const <int, int?>{});
+    final colorsMap = ref.read(folderColorsProvider).maybeWhen(
+      data: (m) => m, orElse: () => const <int,int?>{},
+    );
     Color dot(int? id) {
       final theme = Theme.of(ctx).colorScheme.outlineVariant;
       if (id == null) return theme;
@@ -212,20 +198,17 @@ class _FolderButtonSmall extends ConsumerWidget {
     }
 
     final chosen = await showModalBottomSheet<int?>(
-      context: ctx,
-      showDragHandle: true,
+      context: ctx, showDragHandle: true,
       builder: (sheetCtx) => SafeArea(
         child: ListView(
           shrinkWrap: true,
           children: [
             const ListTile(title: Text('Escolhe a pasta')),
             RadioListTile<int?>(
-              value: null,
-              groupValue: currentId,
+              value: null, groupValue: currentId,
               title: const Text('Sem pasta'),
               secondary: CircleAvatar(
-                backgroundColor: dot(null),
-                radius: 12,
+                backgroundColor: dot(null), radius: 12,
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -235,24 +218,19 @@ class _FolderButtonSmall extends ConsumerWidget {
               ),
               onChanged: (v) => Navigator.pop(sheetCtx, v),
             ),
-            ...folders.map(
-              (f) => RadioListTile<int?>(
-                value: f.id,
-                groupValue: currentId,
-                title: Text(f.name),
-                secondary: CircleAvatar(
-                  backgroundColor: dot(f.id),
-                  radius: 12,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black, width: 1.2),
-                    ),
+            ...folders.map((f) => RadioListTile<int?>(
+              value: f.id, groupValue: currentId, title: Text(f.name),
+              secondary: CircleAvatar(
+                backgroundColor: dot(f.id), radius: 12,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.black, width: 1.2),
                   ),
                 ),
-                onChanged: (v) => Navigator.pop(sheetCtx, v),
               ),
-            ),
+              onChanged: (v) => Navigator.pop(sheetCtx, v),
+            )),
           ],
         ),
       ),

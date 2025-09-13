@@ -47,6 +47,7 @@ class NotesRepo {
     int? color,
     int? folderId,
   }) async {
+    final now = DateTime.now();
     if (id == null) {
       return db
           .into(db.notes)
@@ -56,6 +57,7 @@ class NotesRepo {
               body: body,
               color: Value(color),
               folderId: Value(folderId),
+              updatedAt: Value(now),
             ),
           );
     } else {
@@ -64,7 +66,8 @@ class NotesRepo {
           title: Value(title),
           body: Value(body),
           color: Value(color),
-          folderId: Value(folderId), // <-- FALTAVA
+          folderId: Value(folderId), // <- essencial
+          updatedAt: Value(now), // <- reordena e força stream
         ),
       );
       return id;
