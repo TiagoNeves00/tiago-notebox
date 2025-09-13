@@ -67,7 +67,7 @@ class NotesRepo {
           body: Value(body),
           color: Value(color),
           folderId: Value(folderId), // <- essencial
-          updatedAt: Value(now), // <- reordena e força stream
+          updatedAt: Value(DateTime.now()),
         ),
       );
       return id;

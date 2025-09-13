@@ -1,40 +1,35 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NoteDraft {
-  String title;
-  String body;
-  int? color;
-  int? folderId;
-
-  NoteDraft({this.title = '', this.body = '', this.color, this.folderId});
+  final String title;
+  final String body;
+  final int? color;
+  final int? folderId;
+  const NoteDraft({this.title = '', this.body = '', this.color, this.folderId});
 }
 
-class EditorCtrl extends Notifier<NoteDraft> {
-  final _undo = <NoteDraft>[];
-  final _redo = <NoteDraft>[];
+class EditorCtrl extends StateNotifier<NoteDraft> {
+  EditorCtrl() : super(const NoteDraft());
 
-  @override
-  NoteDraft build() => NoteDraft();
-  void load(NoteDraft d) {
-    state = d;
-    _undo.clear();
-    _redo.clear();
+  void load(NoteDraft d) => state = d;
+
+  void set({String? title, String? body}) {
+    state = NoteDraft(
+      title: title ?? state.title,
+      body: body ?? state.body,
+      color: state.color,
+      folderId: state.folderId,
+    );
   }
 
-  void set({String? title, String? body, int? color, int? folderId}) {
-    _undo.add(NoteDraft(title: state.title, body: state.body, color: state.color, folderId: state.folderId));
-    _redo.clear();
-    state = NoteDraft(title: title ?? state.title, body: body ?? state.body, color: color ?? state.color, folderId: folderId ?? state.folderId);
-  }
+  void setColor(int? v) => state = NoteDraft(
+        title: state.title, body: state.body, color: v, folderId: state.folderId);
 
-  void undo(){ if(_undo.isEmpty)return;
-    _redo.add(state); state=_undo.removeLast(); }
-  
-  void redo(){ if(_redo.isEmpty)return;
-    _undo.add(state); state=_redo.removeLast(); }
-  
-  String snapshotJson()=>jsonEncode({'title':state.title,'body':state.body,'color':state.color, 'folderId':state.folderId});
+  void setFolderId(int? v) => state = NoteDraft(
+        title: state.title, body: state.body, color: state.color, folderId: v);
 }
-final editorProvider=NotifierProvider<EditorCtrl,NoteDraft>(EditorCtrl.new);
+
+// PROVIDER CORRETO
+final editorProvider =
+    StateNotifierProvider<EditorCtrl, NoteDraft>((ref) => EditorCtrl());
 

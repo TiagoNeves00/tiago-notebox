@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notebox/data/local/db.dart';
 import 'package:notebox/data/repos/folders_repo.dart';
 import 'package:notebox/features/home/providers/filters.dart';
 import 'package:notebox/features/home/providers/folder_colors.dart';
@@ -9,54 +10,67 @@ class FolderChipsWrap extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stream = ref.watch(foldersRepoProvider).watchAll();
-    final selected = ref.watch(selectedFolderIdProvider);
+    final folders$ = ref.watch(foldersRepoProvider).watchAll();
+    final colorsMap = ref
+        .watch(folderColorsProvider)
+        .maybeWhen(data: (m) => m, orElse: () => const <int, int?>{});
+    final sel = ref.watch(folderFilterProvider);
 
-    final colorsMap = ref.watch(folderColorsProvider).maybeWhen(
-      data: (m) => m,
-      orElse: () => const <int, int?>{},
-    );
+    BorderSide selectedSide(FolderFilter f) =>
+        sel.runtimeType == f.runtimeType &&
+                (f is! ById || (sel is ById && sel.id == f.id))
+            ? const BorderSide(color: Colors.black87, width: 1.6)
+            : BorderSide.none;
 
-    return StreamBuilder(
-      stream: stream,
+    return StreamBuilder<List<Folder>>(
+      stream: folders$,
       builder: (_, snap) {
-        final items = snap.data ?? [];
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            alignment: WrapAlignment.start,
-            children: [
-              ChoiceChip(
-                label: const Text('Todas'),
-                selected: selected == null,
-                showCheckmark: false,
-                onSelected: (_) =>
-                    ref.read(selectedFolderIdProvider.notifier).state = null,
-              ),
-              ...items.map(
-                (f) => ChoiceChip(
+        final folders = snap.data ?? const <Folder>[];
+
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('Todas'),
+              selected: sel is All,
+              showCheckmark: false,
+              side: selectedSide(const All()),
+              onSelected: (_) =>
+                  ref.read(folderFilterProvider.notifier).state = const All(),
+            ),
+            ChoiceChip(
+              label: const Text('Sem pasta'),
+              selected: sel is Unfiled,
+              showCheckmark: false,
+              side: selectedSide(const Unfiled()),
+              onSelected: (_) => ref
+                  .read(folderFilterProvider.notifier)
+                  .state = const Unfiled(),
+            ),
+            ...folders.map(
+              (f) {
+                final cInt = colorsMap[f.id];
+                final color = cInt != null
+                    ? Color(cInt)
+                    : Theme.of(context).colorScheme.outlineVariant;
+
+                return ChoiceChip(
                   label: Text(f.name),
-                  selected: selected == f.id,
+                  selected: sel is ById && sel.id == f.id,
                   showCheckmark: false,
-                  selectedColor: (colorsMap[f.id] != null
-                      ? Color(colorsMap[f.id]!).withOpacity(.6)
-                      : Theme.of(
-                          context,
-                        ).colorScheme.secondaryContainer.withOpacity(.35)),
-                  avatar: colorsMap[f.id] != null
-                      ? CircleAvatar(
-                          radius: 8,
-                          backgroundColor: Color(colorsMap[f.id]!),
-                        )
-                      : null,
-                  onSelected: (_) =>
-                      ref.read(selectedFolderIdProvider.notifier).state = f.id,
-                ),
-              ),
-            ],
-          ),
+                  side: selectedSide(ById(f.id)),
+                  avatar: CircleAvatar(
+                    backgroundColor: color,
+                    radius: 6,
+                  ),
+                  onSelected: (_) => ref
+                      .read(folderFilterProvider.notifier)
+                      .state = ById(f.id),
+                );
+              },
+            ),
+          ],
         );
       },
     );

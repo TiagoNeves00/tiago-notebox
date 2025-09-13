@@ -59,14 +59,13 @@ class HomePage extends ConsumerWidget {
         context.push('/edit'); // sem id = novo
           },
           backgroundColor: const Color.fromARGB(255, 234, 0, 255),
-          shape: CircleBorder(
+          shape: const CircleBorder(
         side: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Colors.black,
+          color: Colors.white,
           width: 1.5,
         ),
           ),
+          elevation: 8, // shadow effect
           child: const Icon(Icons.add, size: 36, color: Colors.white),
         ),
       ),
