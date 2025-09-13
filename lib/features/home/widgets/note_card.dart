@@ -20,7 +20,7 @@ class NoteCard extends StatelessWidget {
     return Card(
       elevation: 0,
       color: bg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
@@ -52,11 +52,13 @@ class NoteCard extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 12),
-                  const Divider(
-                    color: Colors.black12,
+                    Divider(
+                    color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color.fromARGB(129, 255, 255, 255)
+                      : Colors.black12,
                     thickness: 1.5,
                     height: 3,
-                  ),
+                    ),
                   const SizedBox(height: 12),
                   Expanded(
                     child: Text(
