@@ -17,10 +17,19 @@ LazyDatabase _openConn() {
   });
 }
 
-@DriftDatabase(
-  tables: [Notes, Folders, Tags, NoteTags, Attachments, Trash, Revisions],
-)
+@DriftDatabase(tables: [Notes, Folders, Tags, NoteTags, Attachments, Trash, Revisions])
 class AppDb extends _$AppDb {
   AppDb() : super(_openConn());
-  @override int get schemaVersion => 1;
+
+  @override
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(folders, folders.color);
+      }
+    },
+  );
 }

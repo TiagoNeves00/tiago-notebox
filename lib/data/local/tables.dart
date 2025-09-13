@@ -15,6 +15,7 @@ class Folders extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().unique()();
   IntColumn get order => integer().withDefault(const Constant(0))();
+  IntColumn get color => integer().nullable()(); // nova coluna
 }
 
 class Tags extends Table {
