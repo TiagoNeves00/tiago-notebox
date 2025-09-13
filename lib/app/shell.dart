@@ -100,7 +100,6 @@ class AppShell extends ConsumerWidget {
                 ? [
                     const Padding(
                       padding: EdgeInsets.only(right: 6),
-                      child: Center(child: Text('Pasta:', style: TextStyle(fontSize: 14))),
                     ),
                     const _FolderButtonSmall(),
                     IconButton(
@@ -164,6 +163,8 @@ class _FolderButtonSmall extends ConsumerWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.folder_open, size: 24), // <-- Added icon here
+              const SizedBox(width: 4),
               CircleAvatar(
                 radius: 8,
                 backgroundColor: color,

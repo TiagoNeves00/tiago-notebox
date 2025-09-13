@@ -8,18 +8,21 @@ import 'package:notebox/data/repos/folders_repo.dart';
 class FoldersPage extends ConsumerWidget {
   const FoldersPage({super.key});
   static const kFolderSoftColors = <int>[
-    0xFFFDE68A, // amarelo suave
-    0xFFBFDBFE, // azul claro
-    0xFFC7D2FE, // indigo claro
-    0xFFDDD6FE, // roxo claro
-    0xFFA7F3D0, // teal/verde menta
-    0xFFFEF3C7, // creme
-    0xFFFBCFE8, // rosa claro
-    0xFFBAE6FD, // ciano claro
-    0xFFD9F99D, // lima suave
-    0xFFFFE4E6, // rosa pálido
-    0xFFFFEDD5, // pêssego
-    0xFFE9D5FF, // lilás
+    0xFFE53935, // red
+    0xFFD81B60, // pink
+    0xFF8E24AA, // purple
+    0xFF5E35B1, // deep purple
+    0xFF3949AB, // indigo
+    0xFF1E88E5, // blue
+    0xFF039BE5, // light blue
+    0xFF00897B, // teal
+    0xFF43A047, // green
+    0xFFFDD835, // yellow
+    0xFFFB8C00, // orange
+    0xFFF4511E, // deep orange
+    0xFF6D4C41, // brown
+    0xFF757575, // gray
+    0xFF546E7A, // blue gray
   ];
 
   @override
@@ -103,13 +106,14 @@ class FoldersPage extends ConsumerWidget {
                                               backgroundColor: Color(v),
                                               radius: 18,
                                               child: Container(
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                color: Colors.black.withOpacity(0.15),
-                                                width: 2,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: Colors.black
+                                                        .withOpacity(0.15),
+                                                    width: 2,
+                                                  ),
                                                 ),
-                                              ),
                                               ),
                                             ),
                                             if (f.color == v)
