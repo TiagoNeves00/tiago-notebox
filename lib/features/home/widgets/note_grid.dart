@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:notebox/data/local/db.dart';
+import 'package:notebox/features/home/widgets/notes_card.dart';
 
 final _palette = <int>[
   0xFFB3E5FC, 0xFFFFF59D, 0xFFC8E6C9, 0xFFD1C4E9, 0xFFFFCCBC, 0xFFFFFDE7
@@ -28,36 +29,9 @@ class NoteGrid extends StatelessWidget {
       itemBuilder: (context, i) {   // <── usar context aqui
         final n = notes[i];
         final c = n.color != null ? Color(n.color!) : folderColor(n.folderId);
-        return Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: c, width: 1.6),
-          ),
-          child: InkWell(
-            onTap: () => context.push('/edit/${n.id}'),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    n.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 6),
-                  Expanded(
-                    child: Text(
-                      n.body,
-                      maxLines: 6,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        return NoteCard(
+          note: n,
+          onTap: () => Navigator.of(context).pushNamed('/edit/${n.id}'),
         );
       },
     );
