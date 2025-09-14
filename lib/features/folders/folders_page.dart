@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notebox/data/local/db.dart';
 import 'package:notebox/data/local/db_provider.dart';
 import 'package:notebox/data/repos/folders_repo.dart';
+import 'package:notebox/features/folders/note_counts_provider.dart';
 
 class FoldersPage extends ConsumerWidget {
   const FoldersPage({super.key});
@@ -29,6 +30,9 @@ class FoldersPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stream = ref.watch(foldersRepoProvider).watchAll();
     final db = ref.watch(dbProvider);
+    final counts = ref
+        .watch(noteCountsByFolderProvider)
+        .maybeWhen(data: (m) => m, orElse: () => const <int, int>{});
 
     Future<String?> editName([String initial = '']) async {
       final tc = TextEditingController(text: initial);
@@ -70,7 +74,32 @@ class FoldersPage extends ConsumerWidget {
                 itemBuilder: (_, i) {
                   final f = items[i];
                   return ListTile(
-                    title: Text(f.name),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: Theme.of(context).textTheme.bodyLarge,
+                              children: [
+                                TextSpan(text: f.name),
+                                WidgetSpan(
+                                  alignment: PlaceholderAlignment.middle,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Text(
+                                      '(${counts[f.id] ?? 0})',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -177,9 +206,57 @@ class FoldersPage extends ConsumerWidget {
                         IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () async {
-                            await (db.delete(
-                              db.folders,
-                            )..where((t) => t.id.equals(f.id))).go();
+                            final ok =
+                                await showDialog<bool>(
+                                  context: context,
+                                  useRootNavigator:
+                                      false, // <- importante em apps com Shell/AppBar
+                                  barrierDismissible: true,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Eliminar pasta?'),
+                                    content: const Text(
+                                      'As notas NÃO são apagadas. Vão passar para "Sem pasta".',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(
+                                          ctx,
+                                          false,
+                                        ), // usa ctx
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, true), // usa ctx
+                                        child: const Text('Eliminar'),
+                                      ),
+                                    ],
+                                  ),
+                                ) ??
+                                false;
+
+                            if (!ok) return;
+
+                            await db.transaction(() async {
+                              await (db.update(
+                                db.notes,
+                              )..where((t) => t.folderId.equals(f.id))).write(
+                                const NotesCompanion(folderId: drift.Value(null)),
+                              );
+                              await (db.delete(
+                                db.folders,
+                              )..where((t) => t.id.equals(f.id))).go();
+                            });
+
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Pasta eliminada. Notas foram para "Sem pasta".',
+                                ),
+                              ),
+                            );
                           },
                         ),
                       ],

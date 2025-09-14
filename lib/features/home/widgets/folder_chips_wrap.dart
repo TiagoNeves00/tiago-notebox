@@ -16,11 +16,14 @@ class FolderChipsWrap extends ConsumerWidget {
         .maybeWhen(data: (m) => m, orElse: () => const <int, int?>{});
     final sel = ref.watch(folderFilterProvider);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final outlineColor = isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.15);
+
     BorderSide selectedSide(FolderFilter f) =>
         sel.runtimeType == f.runtimeType &&
                 (f is! ById || (sel is ById && sel.id == f.id))
-            ? const BorderSide(color: Colors.black87, width: 1.6)
-            : BorderSide.none;
+            ? BorderSide(color: isDark ? Colors.white : Colors.black, width: 1.2)
+            : BorderSide(color: outlineColor, width: 1);
 
     return StreamBuilder<List<Folder>>(
       stream: folders$,
@@ -40,7 +43,7 @@ class FolderChipsWrap extends ConsumerWidget {
                   ref.read(folderFilterProvider.notifier).state = const All(),
             ),
             ChoiceChip(
-              label: const Text('Sem pasta'),
+              label: const Text('Sem Pasta'),
               selected: sel is Unfiled,
               showCheckmark: false,
               side: selectedSide(const Unfiled()),
