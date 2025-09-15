@@ -9,6 +9,7 @@ class Notes extends Table {
   DateTimeColumn get updatedAt =>
       dateTime().withDefault(currentDateAndTime)();
   IntColumn get folderId => integer().nullable().references(Folders, #id)();
+  TextColumn get bgKey => text().nullable()();
 }
 
 class Folders extends Table {

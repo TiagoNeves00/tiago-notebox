@@ -22,14 +22,13 @@ class AppDb extends _$AppDb {
   AppDb() : super(_openConn());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (m, from, to) async {
-      if (from < 2) {
-        await m.addColumn(folders, folders.color);
-      }
-    },
+    if (from < 2) await m.addColumn(folders, folders.color);
+    if (from < 3) await m.addColumn(notes, notes.bgKey);
+  },
   );
 }

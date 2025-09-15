@@ -46,6 +46,7 @@ class NotesRepo {
     required String body,
     int? color,
     int? folderId,
+    String? bgKey,
   }) async {
     final now = DateTime.now();
     if (id == null) {
@@ -57,6 +58,7 @@ class NotesRepo {
               body: body,
               color: Value(color),
               folderId: Value(folderId),
+              bgKey: Value(bgKey),
               updatedAt: Value(now),
             ),
           );
@@ -66,8 +68,9 @@ class NotesRepo {
           title: Value(title),
           body: Value(body),
           color: Value(color),
-          folderId: Value(folderId), // <- essencial
-          updatedAt: Value(DateTime.now()),
+          folderId: Value(folderId),
+          bgKey: Value(bgKey),
+          updatedAt: Value(now),
         ),
       );
       return id;

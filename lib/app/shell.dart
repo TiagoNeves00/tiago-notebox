@@ -1,6 +1,6 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // <- novo
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:notebox/app/notes_tasks_tabs.dart';
@@ -10,6 +10,7 @@ import 'package:notebox/data/repos/notes_repo.dart';
 import 'package:notebox/data/repos/revisions_repo.dart';
 import 'package:notebox/features/editor/editor_baseline.dart';
 import 'package:notebox/features/editor/editor_ctrl.dart';
+import 'package:notebox/features/editor/note_bg_picker.dart';
 import 'package:notebox/features/home/providers/folder_colors.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
@@ -38,10 +39,11 @@ class AppShell extends ConsumerWidget {
     final isNotes = loc.startsWith('/notes');
     final isEdit = loc.startsWith('/edit');
 
-    // estado reativo do editor
     final draft = ref.watch(editorProvider);
     final base = ref.watch(editorBaselineProvider);
     final dirty = isDirty(draft, base);
+
+    final hasBg = isEdit && ref.watch(editorProvider).bgKey != null;
 
     Future<void> saveEditorIfDirty() async {
       if (!dirty) return;
@@ -54,6 +56,7 @@ class AppShell extends ConsumerWidget {
             body: draft.body,
             color: draft.color,
             folderId: draft.folderId,
+            bgKey: draft.bgKey, // <- inclui fundo
           );
       await ref
           .read(revisionsRepoProvider)
@@ -64,13 +67,26 @@ class AppShell extends ConsumerWidget {
               'body': draft.body,
               'color': draft.color,
               'folderId': draft.folderId,
+              'bgKey': draft.bgKey,
             }),
           );
       ref.read(editorBaselineProvider.notifier).state = draft;
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: !isEdit,
+      extendBodyBehindAppBar: isEdit, // <- cobre status bar
       appBar: AppBar(
+        backgroundColor: isEdit ? Colors.transparent : null,
+        surfaceTintColor: isEdit ? Colors.transparent : null,
+        elevation: isEdit ? 0 : null,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: hasBg ? SystemUiOverlayStyle.light : null,
+        foregroundColor: hasBg ? Colors.white : null, // <- texto "Nota"
+        iconTheme: hasBg ? const IconThemeData(color: Colors.white) : null,
+        actionsIconTheme: hasBg
+            ? const IconThemeData(color: Colors.white)
+            : null,
         leading: isHome
             ? null
             : IconButton(
@@ -110,18 +126,16 @@ class AppShell extends ConsumerWidget {
                       const Padding(padding: EdgeInsets.only(right: 6)),
                       const _FolderButtonSmall(),
                       IconButton(
+                        tooltip: 'Customize',
+                        icon: const Icon(Icons.image_outlined, size: 30),
+                        onPressed: () => showNoteBgPicker(context, ref),
+                      ),
+                      IconButton(
                         tooltip: 'Guardar',
-                        onPressed: dirty
-                            ? () async {
-                                await saveEditorIfDirty();
-                                if (context.mounted) context.pop();
-                              }
-                            : null,
+                        onPressed: dirty ? () async { await saveEditorIfDirty(); context.pop(); } : null,
                         icon: Icon(
                           Icons.check_circle_rounded,
-                          color: dirty
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: dirty ? Theme.of(context).colorScheme.primary : null,
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -139,6 +153,9 @@ class _FolderButtonSmall extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final onColor =
+        Theme.of(context).appBarTheme.foregroundColor ??
+        DefaultTextStyle.of(context).style.color;
     final currentId = ref.watch(editorProvider).folderId;
     final folders$ = ref.watch(foldersRepoProvider).watchAll();
     final colorsMap = ref
@@ -174,7 +191,7 @@ class _FolderButtonSmall extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.folder_open, size: 24), // <-- Added icon here
+                Icon(Icons.folder_open_rounded, size: 20, color: onColor),
                 const SizedBox(width: 4),
                 CircleAvatar(
                   radius: 8,
@@ -187,8 +204,12 @@ class _FolderButtonSmall extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text(name, overflow: TextOverflow.ellipsis),
-                const Icon(Icons.expand_more, size: 18),
+                Text(
+                  name,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: onColor),
+                ),
+                Icon(Icons.expand_more, size: 18, color: onColor),
               ],
             ),
           ),
@@ -205,7 +226,6 @@ class _FolderButtonSmall extends ConsumerWidget {
     final repo = ref.read(foldersRepoProvider);
     final folders = await repo.watchAll().first;
 
-    // mapa de cores já existente
     final colorsMap = ref
         .read(folderColorsProvider)
         .maybeWhen(data: (m) => m, orElse: () => const <int, int?>{});
@@ -216,7 +236,7 @@ class _FolderButtonSmall extends ConsumerWidget {
       return v != null ? Color(v) : theme;
     }
 
-    // NOTA: retorna int; -1 = Sem pasta, null = cancelar
+    // -1 = Sem pasta, null = cancelar
     final chosen = await showModalBottomSheet<int>(
       context: ctx,
       showDragHandle: true,
@@ -226,10 +246,13 @@ class _FolderButtonSmall extends ConsumerWidget {
           children: [
             const ListTile(
               title: Text(
-              'Selecione a Pasta:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                'Selecione a Pasta:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
             ),
             RadioListTile<int>(
               value: -1,
@@ -252,7 +275,7 @@ class _FolderButtonSmall extends ConsumerWidget {
       ),
     );
 
-    if (chosen == null) return; // cancel
+    if (chosen == null) return;
     final int? folderId = chosen == -1 ? null : chosen;
     ref.read(editorProvider.notifier).setFolderId(folderId);
   }

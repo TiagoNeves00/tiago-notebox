@@ -33,3 +33,13 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/note_bg/old_paper_bg.webp
+    - assets/note_bg/purple_flower_bg.webp
+    - assets/note_bg/blue_ocean_sky_bg.webp
+    - assets/note_bg/orange_water_sky_bg.webp
+    - assets/note_bg/baby_blue_bg.webp
+    - assets/note_bg/dark_night_bg.webp
+    - assets/note_bg/white_bg.webp
+    - assets/note_bg/bridge_low_sun_bg.webp
+    - assets/note_bg/night_city_1_bg.webp

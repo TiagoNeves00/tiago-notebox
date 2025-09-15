@@ -386,6 +386,15 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
       'REFERENCES folders (id)',
     ),
   );
+  static const VerificationMeta _bgKeyMeta = const VerificationMeta('bgKey');
+  @override
+  late final GeneratedColumn<String> bgKey = GeneratedColumn<String>(
+    'bg_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -395,6 +404,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
     isFavorite,
     updatedAt,
     folderId,
+    bgKey,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -451,6 +461,12 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
         folderId.isAcceptableOrUnknown(data['folder_id']!, _folderIdMeta),
       );
     }
+    if (data.containsKey('bg_key')) {
+      context.handle(
+        _bgKeyMeta,
+        bgKey.isAcceptableOrUnknown(data['bg_key']!, _bgKeyMeta),
+      );
+    }
     return context;
   }
 
@@ -488,6 +504,10 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
         DriftSqlType.int,
         data['${effectivePrefix}folder_id'],
       ),
+      bgKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bg_key'],
+      ),
     );
   }
 
@@ -505,6 +525,7 @@ class Note extends DataClass implements Insertable<Note> {
   final bool isFavorite;
   final DateTime updatedAt;
   final int? folderId;
+  final String? bgKey;
   const Note({
     required this.id,
     required this.title,
@@ -513,6 +534,7 @@ class Note extends DataClass implements Insertable<Note> {
     required this.isFavorite,
     required this.updatedAt,
     this.folderId,
+    this.bgKey,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -527,6 +549,9 @@ class Note extends DataClass implements Insertable<Note> {
     map['updated_at'] = Variable<DateTime>(updatedAt);
     if (!nullToAbsent || folderId != null) {
       map['folder_id'] = Variable<int>(folderId);
+    }
+    if (!nullToAbsent || bgKey != null) {
+      map['bg_key'] = Variable<String>(bgKey);
     }
     return map;
   }
@@ -544,6 +569,9 @@ class Note extends DataClass implements Insertable<Note> {
       folderId: folderId == null && nullToAbsent
           ? const Value.absent()
           : Value(folderId),
+      bgKey: bgKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bgKey),
     );
   }
 
@@ -560,6 +588,7 @@ class Note extends DataClass implements Insertable<Note> {
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       folderId: serializer.fromJson<int?>(json['folderId']),
+      bgKey: serializer.fromJson<String?>(json['bgKey']),
     );
   }
   @override
@@ -573,6 +602,7 @@ class Note extends DataClass implements Insertable<Note> {
       'isFavorite': serializer.toJson<bool>(isFavorite),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'folderId': serializer.toJson<int?>(folderId),
+      'bgKey': serializer.toJson<String?>(bgKey),
     };
   }
 
@@ -584,6 +614,7 @@ class Note extends DataClass implements Insertable<Note> {
     bool? isFavorite,
     DateTime? updatedAt,
     Value<int?> folderId = const Value.absent(),
+    Value<String?> bgKey = const Value.absent(),
   }) => Note(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -592,6 +623,7 @@ class Note extends DataClass implements Insertable<Note> {
     isFavorite: isFavorite ?? this.isFavorite,
     updatedAt: updatedAt ?? this.updatedAt,
     folderId: folderId.present ? folderId.value : this.folderId,
+    bgKey: bgKey.present ? bgKey.value : this.bgKey,
   );
   Note copyWithCompanion(NotesCompanion data) {
     return Note(
@@ -604,6 +636,7 @@ class Note extends DataClass implements Insertable<Note> {
           : this.isFavorite,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       folderId: data.folderId.present ? data.folderId.value : this.folderId,
+      bgKey: data.bgKey.present ? data.bgKey.value : this.bgKey,
     );
   }
 
@@ -616,14 +649,23 @@ class Note extends DataClass implements Insertable<Note> {
           ..write('color: $color, ')
           ..write('isFavorite: $isFavorite, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('folderId: $folderId')
+          ..write('folderId: $folderId, ')
+          ..write('bgKey: $bgKey')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, title, body, color, isFavorite, updatedAt, folderId);
+  int get hashCode => Object.hash(
+    id,
+    title,
+    body,
+    color,
+    isFavorite,
+    updatedAt,
+    folderId,
+    bgKey,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -634,7 +676,8 @@ class Note extends DataClass implements Insertable<Note> {
           other.color == this.color &&
           other.isFavorite == this.isFavorite &&
           other.updatedAt == this.updatedAt &&
-          other.folderId == this.folderId);
+          other.folderId == this.folderId &&
+          other.bgKey == this.bgKey);
 }
 
 class NotesCompanion extends UpdateCompanion<Note> {
@@ -645,6 +688,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
   final Value<bool> isFavorite;
   final Value<DateTime> updatedAt;
   final Value<int?> folderId;
+  final Value<String?> bgKey;
   const NotesCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -653,6 +697,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     this.isFavorite = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.folderId = const Value.absent(),
+    this.bgKey = const Value.absent(),
   });
   NotesCompanion.insert({
     this.id = const Value.absent(),
@@ -662,6 +707,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     this.isFavorite = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.folderId = const Value.absent(),
+    this.bgKey = const Value.absent(),
   }) : title = Value(title),
        body = Value(body);
   static Insertable<Note> custom({
@@ -672,6 +718,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     Expression<bool>? isFavorite,
     Expression<DateTime>? updatedAt,
     Expression<int>? folderId,
+    Expression<String>? bgKey,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -681,6 +728,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
       if (isFavorite != null) 'is_favorite': isFavorite,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (folderId != null) 'folder_id': folderId,
+      if (bgKey != null) 'bg_key': bgKey,
     });
   }
 
@@ -692,6 +740,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     Value<bool>? isFavorite,
     Value<DateTime>? updatedAt,
     Value<int?>? folderId,
+    Value<String?>? bgKey,
   }) {
     return NotesCompanion(
       id: id ?? this.id,
@@ -701,6 +750,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
       isFavorite: isFavorite ?? this.isFavorite,
       updatedAt: updatedAt ?? this.updatedAt,
       folderId: folderId ?? this.folderId,
+      bgKey: bgKey ?? this.bgKey,
     );
   }
 
@@ -728,6 +778,9 @@ class NotesCompanion extends UpdateCompanion<Note> {
     if (folderId.present) {
       map['folder_id'] = Variable<int>(folderId.value);
     }
+    if (bgKey.present) {
+      map['bg_key'] = Variable<String>(bgKey.value);
+    }
     return map;
   }
 
@@ -740,7 +793,8 @@ class NotesCompanion extends UpdateCompanion<Note> {
           ..write('color: $color, ')
           ..write('isFavorite: $isFavorite, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('folderId: $folderId')
+          ..write('folderId: $folderId, ')
+          ..write('bgKey: $bgKey')
           ..write(')'))
         .toString();
   }
@@ -2448,6 +2502,7 @@ typedef $$NotesTableCreateCompanionBuilder =
       Value<bool> isFavorite,
       Value<DateTime> updatedAt,
       Value<int?> folderId,
+      Value<String?> bgKey,
     });
 typedef $$NotesTableUpdateCompanionBuilder =
     NotesCompanion Function({
@@ -2458,6 +2513,7 @@ typedef $$NotesTableUpdateCompanionBuilder =
       Value<bool> isFavorite,
       Value<DateTime> updatedAt,
       Value<int?> folderId,
+      Value<String?> bgKey,
     });
 
 final class $$NotesTableReferences
@@ -2573,6 +2629,11 @@ class $$NotesTableFilterComposer extends Composer<_$AppDb, $NotesTable> {
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bgKey => $composableBuilder(
+    column: $table.bgKey,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2713,6 +2774,11 @@ class $$NotesTableOrderingComposer extends Composer<_$AppDb, $NotesTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get bgKey => $composableBuilder(
+    column: $table.bgKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$FoldersTableOrderingComposer get folderId {
     final $$FoldersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -2764,6 +2830,9 @@ class $$NotesTableAnnotationComposer extends Composer<_$AppDb, $NotesTable> {
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get bgKey =>
+      $composableBuilder(column: $table.bgKey, builder: (column) => column);
 
   $$FoldersTableAnnotationComposer get folderId {
     final $$FoldersTableAnnotationComposer composer = $composerBuilder(
@@ -2904,6 +2973,7 @@ class $$NotesTableTableManager
                 Value<bool> isFavorite = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int?> folderId = const Value.absent(),
+                Value<String?> bgKey = const Value.absent(),
               }) => NotesCompanion(
                 id: id,
                 title: title,
@@ -2912,6 +2982,7 @@ class $$NotesTableTableManager
                 isFavorite: isFavorite,
                 updatedAt: updatedAt,
                 folderId: folderId,
+                bgKey: bgKey,
               ),
           createCompanionCallback:
               ({
@@ -2922,6 +2993,7 @@ class $$NotesTableTableManager
                 Value<bool> isFavorite = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int?> folderId = const Value.absent(),
+                Value<String?> bgKey = const Value.absent(),
               }) => NotesCompanion.insert(
                 id: id,
                 title: title,
@@ -2930,6 +3002,7 @@ class $$NotesTableTableManager
                 isFavorite: isFavorite,
                 updatedAt: updatedAt,
                 folderId: folderId,
+                bgKey: bgKey,
               ),
           withReferenceMapper: (p0) => p0
               .map(

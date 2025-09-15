@@ -5,7 +5,8 @@ class NoteDraft {
   final String body;
   final int? color;
   final int? folderId;
-  const NoteDraft({this.title = '', this.body = '', this.color, this.folderId});
+  final String? bgKey;
+  const NoteDraft({this.title = '', this.body = '', this.color, this.folderId, this.bgKey});
 }
 
 class EditorCtrl extends StateNotifier<NoteDraft> {
@@ -19,14 +20,20 @@ class EditorCtrl extends StateNotifier<NoteDraft> {
       body: body ?? state.body,
       color: state.color,
       folderId: state.folderId,
+      bgKey: state.bgKey,
     );
   }
 
   void setColor(int? v) => state = NoteDraft(
-        title: state.title, body: state.body, color: v, folderId: state.folderId);
+        title: state.title, body: state.body, color: v, folderId: state.folderId, bgKey: state.bgKey);
 
   void setFolderId(int? v) => state = NoteDraft(
-        title: state.title, body: state.body, color: state.color, folderId: v);
+        title: state.title, body: state.body, color: state.color, folderId: v, bgKey: state.bgKey);
+
+  void setBg(String? key) => state = NoteDraft(
+    title: state.title, body: state.body, color: state.color,
+    folderId: state.folderId, bgKey: key,
+  );
 }
 
 // PROVIDER CORRETO
