@@ -16,7 +16,7 @@ class NoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? color.withOpacity(0.15) : color.withOpacity(0.5);
+    final bg = isDark ? color.withOpacity(0.15) : color.withOpacity(0.25);
 
     return Card(
       elevation: 0,
