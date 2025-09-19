@@ -81,7 +81,7 @@ class _S extends ConsumerState<NoteEditorPage> {
       _bgPath = path;
     });
   }
-
+  
   @override
   Widget build(BuildContext context) {
     final st = ref.watch(editorProvider);
@@ -198,9 +198,9 @@ class _S extends ConsumerState<NoteEditorPage> {
                   onChanged: (v) =>
                       ref.read(editorProvider.notifier).set(title: v),
                 ),
-                const SizedBox(height: 8),
-                Divider(height: 1, color: hasBg ? Colors.white24 : null),
                 const SizedBox(height: 12),
+                Divider(height: 1, color: hasBg ? Colors.white24 : null),
+                const SizedBox(height: 24),
                 Expanded(
                   child: TextField(
                     controller: _body,

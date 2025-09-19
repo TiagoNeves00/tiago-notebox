@@ -4,14 +4,12 @@ import 'package:flutter/services.dart'; // <- novo
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:notebox/app/notes_tasks_tabs.dart';
-import 'package:notebox/data/local/db.dart';
-import 'package:notebox/data/repos/folders_repo.dart';
 import 'package:notebox/data/repos/notes_repo.dart';
 import 'package:notebox/data/repos/revisions_repo.dart';
 import 'package:notebox/features/editor/editor_baseline.dart';
 import 'package:notebox/features/editor/editor_ctrl.dart';
 import 'package:notebox/features/editor/note_bg_picker.dart';
-import 'package:notebox/features/home/providers/folder_colors.dart';
+import 'package:notebox/features/home/widgets/folder_pill.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
 class AppShell extends ConsumerWidget {
@@ -44,6 +42,9 @@ class AppShell extends ConsumerWidget {
     final dirty = isDirty(draft, base);
 
     final hasBg = isEdit && ref.watch(editorProvider).bgKey != null;
+
+    final inactiveColor = Color.fromARGB(82, 255, 255, 255);
+    const white = Color.fromARGB(255, 255, 255, 255); // branco (Material A700)
 
     Future<void> saveEditorIfDirty() async {
       if (!dirty) return;
@@ -123,19 +124,32 @@ class AppShell extends ConsumerWidget {
               ]
             : (isEdit
                   ? [
-                      const Padding(padding: EdgeInsets.only(right: 6)),
-                      const _FolderButtonSmall(),
+                      const Padding(
+                        padding: EdgeInsets.only(right: 6),
+                        child: FolderPill(),
+                      ),
                       IconButton(
                         tooltip: 'Customize',
                         icon: const Icon(Icons.image_outlined, size: 30),
                         onPressed: () => showNoteBgPicker(context, ref),
                       ),
+
                       IconButton(
                         tooltip: 'Guardar',
-                        onPressed: dirty ? () async { await saveEditorIfDirty(); context.pop(); } : null,
-                        icon: Icon(
-                          Icons.check_circle_rounded,
-                          color: dirty ? Theme.of(context).colorScheme.primary : null,
+                        onPressed: dirty
+                            ? () async {
+                                await saveEditorIfDirty();
+                                context.pop();
+                              }
+                            : null,
+                        icon: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 160),
+                          child: Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 32,
+                            key: ValueKey(dirty),
+                            color: dirty ? white : inactiveColor,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -144,139 +158,5 @@ class AppShell extends ConsumerWidget {
       ),
       body: child,
     );
-  }
-}
-
-/// Seletor compacto para o AppBar do editor
-class _FolderButtonSmall extends ConsumerWidget {
-  const _FolderButtonSmall();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final onColor =
-        Theme.of(context).appBarTheme.foregroundColor ??
-        DefaultTextStyle.of(context).style.color;
-    final currentId = ref.watch(editorProvider).folderId;
-    final folders$ = ref.watch(foldersRepoProvider).watchAll();
-    final colorsMap = ref
-        .watch(folderColorsProvider)
-        .maybeWhen(data: (m) => m, orElse: () => const <int, int?>{});
-
-    return StreamBuilder<List<Folder>>(
-      stream: folders$,
-      builder: (_, snap) {
-        final folders = snap.data ?? const <Folder>[];
-        final name = currentId == null
-            ? 'Sem pasta'
-            : folders
-                  .firstWhere(
-                    (f) => f.id == currentId,
-                    orElse: () => Folder(id: -1, name: 'Pasta', order: 0),
-                  )
-                  .name;
-        final cInt = currentId != null ? colorsMap[currentId] : null;
-        final color = cInt != null
-            ? Color(cInt)
-            : Theme.of(context).colorScheme.outlineVariant;
-
-        return Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: FilledButton.tonal(
-            onPressed: () => _pickFolder(context, ref, currentId),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              minimumSize: const Size(0, 36),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.folder_open_rounded, size: 20, color: onColor),
-                const SizedBox(width: 4),
-                CircleAvatar(
-                  radius: 8,
-                  backgroundColor: color,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black, width: 1.2),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  name,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: onColor),
-                ),
-                Icon(Icons.expand_more, size: 18, color: onColor),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _pickFolder(
-    BuildContext ctx,
-    WidgetRef ref,
-    int? currentId,
-  ) async {
-    final repo = ref.read(foldersRepoProvider);
-    final folders = await repo.watchAll().first;
-
-    final colorsMap = ref
-        .read(folderColorsProvider)
-        .maybeWhen(data: (m) => m, orElse: () => const <int, int?>{});
-    Color dot(int? id) {
-      final theme = Theme.of(ctx).colorScheme.outlineVariant;
-      if (id == null) return theme;
-      final v = colorsMap[id];
-      return v != null ? Color(v) : theme;
-    }
-
-    // -1 = Sem pasta, null = cancelar
-    final chosen = await showModalBottomSheet<int>(
-      context: ctx,
-      showDragHandle: true,
-      builder: (sheetCtx) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            const ListTile(
-              title: Text(
-                'Selecione a Pasta:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 12,
-              ),
-            ),
-            RadioListTile<int>(
-              value: -1,
-              groupValue: currentId ?? -1,
-              title: const Text('Sem pasta'),
-              secondary: CircleAvatar(backgroundColor: dot(null), radius: 12),
-              onChanged: (v) => Navigator.pop(sheetCtx, v),
-            ),
-            ...folders.map(
-              (f) => RadioListTile<int>(
-                value: f.id,
-                groupValue: currentId ?? -1,
-                title: Text(f.name),
-                secondary: CircleAvatar(backgroundColor: dot(f.id), radius: 12),
-                onChanged: (v) => Navigator.pop(sheetCtx, v),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (chosen == null) return;
-    final int? folderId = chosen == -1 ? null : chosen;
-    ref.read(editorProvider.notifier).setFolderId(folderId);
   }
 }

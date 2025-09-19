@@ -31,8 +31,8 @@ class FolderChipsWrap extends ConsumerWidget {
         final folders = snap.data ?? const <Folder>[];
 
         return Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 4,
+          runSpacing: 0,
           children: [
             ChoiceChip(
               label: const Text('Todas'),
@@ -41,15 +41,6 @@ class FolderChipsWrap extends ConsumerWidget {
               side: selectedSide(const All()),
               onSelected: (_) =>
                   ref.read(folderFilterProvider.notifier).state = const All(),
-            ),
-            ChoiceChip(
-              label: const Text('Sem Pasta'),
-              selected: sel is Unfiled,
-              showCheckmark: false,
-              side: selectedSide(const Unfiled()),
-              onSelected: (_) => ref
-                  .read(folderFilterProvider.notifier)
-                  .state = const Unfiled(),
             ),
             ...folders.map(
               (f) {

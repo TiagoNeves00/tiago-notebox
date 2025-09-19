@@ -50,7 +50,14 @@ class NoteCard extends StatelessWidget {
               topRight: Radius.circular(24),
               bottomRight: Radius.circular(24),
             ),
-            child: Image.asset(note.bgKey!, fit: BoxFit.cover),
+            child: Image(
+              image: ResizeImage(
+              AssetImage(note.bgKey!),
+              width: 600,
+              height: 600,
+              ),
+              fit: BoxFit.cover,
+            ),
             ),
           ),
           ),

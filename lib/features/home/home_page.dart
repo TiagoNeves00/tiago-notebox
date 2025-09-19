@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:notebox/features/editor/editor_baseline.dart';
-import 'package:notebox/features/editor/editor_ctrl.dart';
 import 'package:notebox/features/home/providers/notes_provider.dart';
 import 'package:notebox/features/home/widgets/folder_chips_wrap.dart';
+import 'package:notebox/features/home/widgets/modern_fab.dart';
 import 'package:notebox/features/home/widgets/note_grid.dart';
 
 class HomePage extends ConsumerWidget {
@@ -26,7 +25,8 @@ class HomePage extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
+              onChanged: (v) =>
+                  ref.read(searchQueryProvider.notifier).state = v,
             ),
           ),
 
@@ -42,28 +42,22 @@ class HomePage extends ConsumerWidget {
                   data: (notes) => notes.isEmpty
                       ? const Center(child: Text('Sem notas'))
                       : NoteGrid(notes: notes), // grelha com outline por cor
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('Erro: $e')),
                 ),
           ),
         ],
       ),
-      floatingActionButton: SizedBox(
-        width: 72,
-        height: 72,
-        child: FloatingActionButton(
-          onPressed: () {
-        // reset estado do editor para draft vazio
-        ref.read(editorProvider.notifier).load(NoteDraft());
-        ref.read(editorBaselineProvider.notifier).state = NoteDraft();
-        context.push('/edit'); // sem id = novo
-          },
-          backgroundColor: const Color.fromARGB(255, 234, 0, 255),
-          shape: const CircleBorder(),
-          elevation: 8, // shadow effect
-          child: const Icon(Icons.add, size: 36, color: Colors.white),
-        ),
+      floatingActionButton: ModernFab(
+        onCreate: () async {
+          // abre nota vazia
+          context.push('/edit');
+          // ou nota rápida:
+          // await showQuickNote(context, onSave: (t) => ref.read(notesRepoProvider).quickCreate(t));
+        },
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

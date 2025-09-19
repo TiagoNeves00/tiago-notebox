@@ -20,31 +20,37 @@ class NotesTasksTabs extends StatelessWidget {
       height: 50,
       child: Stack(
         children: [
-          Row(
+            Row(
             children: [
               InkWell(
-                onTap: () => context.go('/notes'),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 24, top: 10),
-                  child: Text('Notes', style: base),
+              onTap: () => context.go('/notes'),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16, right: 24, top: 10),
+                child: Text(
+                'Notes',
+                style: base.copyWith(fontSize: 24),
                 ),
+              ),
               ),
               InkWell(
-                onTap: () => context.go('/tasks'),
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 24, top: 10),
-                  child: Text('Tasks', style: base),
+              onTap: () => context.go('/tasks'),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 24, top: 10),
+                child: Text(
+                'Tasks',
+                style: base.copyWith(fontSize: 24),
                 ),
               ),
+              ),
             ],
-          ),
+            ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeOut,
             left: isNotes ? 16 : (16 + notesW + 24),
             bottom: 0,
-            width: isNotes ? notesW : tasksW,
-            height: 3,
+            width: isNotes ? notesW + 8 : tasksW + 15,
+            height: 4,
             child: Container(
               decoration: BoxDecoration(
                 color: color,
