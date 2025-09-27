@@ -1,134 +1,121 @@
 import 'package:flutter/material.dart';
 import 'package:notebox/data/local/db.dart';
 
+/// Borda neon ESTÁTICA igual aos ícones (rosa + glow .35, blur 12).
+/// Sem animação. Só traço na periferia.
 class NoteCard extends StatelessWidget {
   final Note note;
   final VoidCallback onTap;
-  final Color color; // cor já resolvida fora
+  final Color color; // usado só na ribbon
+  final EdgeInsets outerPadding;
 
   const NoteCard({
     super.key,
     required this.note,
     required this.onTap,
     required this.color,
+    this.outerPadding = const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? color.withOpacity(0.15) : color.withOpacity(0.25);
+    const cPink = Color(0xFFEA00FF); // igual aos ícones
+    const radius = 12.0;
 
-    return Card(
-      elevation: 0,
-      color: bg,
-      shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(28),    // bigger left curvature for card
-        bottomLeft: Radius.circular(28), // bigger left curvature for card
-        topRight: Radius.circular(24),
-        bottomRight: Radius.circular(24),
-      ),
-      ),
-      child: InkWell(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(28),
-        bottomLeft: Radius.circular(28),
-        topRight: Radius.circular(24),
-        bottomRight: Radius.circular(24),
-      ),
-      onTap: onTap,
-      child: Stack(
-        children: [
-        if (note.bgKey != null)
-          Positioned.fill(
-          child: Opacity(
-            opacity: .25,
-            child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(28),
-              bottomLeft: Radius.circular(28),
-              topRight: Radius.circular(24),
-              bottomRight: Radius.circular(24),
-            ),
-            child: Image(
-              image: ResizeImage(
-              AssetImage(note.bgKey!),
-              width: 600,
-              height: 600,
-              ),
-              fit: BoxFit.cover,
-            ),
-            ),
-          ),
-          ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-          // faixa esquerda
-          Container(
-            width: 10, // a bit bigger
-            decoration: const BoxDecoration(
-            color: Colors.transparent, // color set below
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),    // keep original for faixa
-              bottomLeft: Radius.circular(16), // keep original for faixa
-              topRight: Radius.circular(16),    // sharp edge
-              bottomRight: Radius.circular(16), // sharp edge
-            ),
-            ),
-            child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Color.lerp(color, Colors.black, 0.1),
-              borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              bottomLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-              bottomRight: Radius.circular(16),
-              ),
-            ),
-            ),
-          ),
-          // conteúdo
-          Expanded(
-            child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-              Text(
-                note.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  fontSize: (Theme.of(context).textTheme.titleMedium?.fontSize ?? 20),
-                  ),
-              ),
-              const SizedBox(height: 12),
-              Divider(
-                color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color.fromARGB(129, 255, 255, 255)
-                  : Colors.black12,
-                thickness: 1.5,
-                height: 3,
-              ),
-              const SizedBox(height: 12),
-              Flexible(
-                child: Text(
-                note.body,
-                maxLines: 6,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              ],
-            ),
-            ),
-          ),
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardFill = cs.surfaceContainerHighest.withOpacity(isDark ? .92 : .96);
+
+    return Padding(
+      padding: outerPadding,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(radius +  2),
+          color: Colors.transparent,
+          border: Border.all(color: cPink, width: 0.1), // largura da borda
+          boxShadow: [
+            BoxShadow(color: cPink.withOpacity(.65), blurRadius: 1), // glow igual aos ícones
           ],
         ),
-        ],
-      ),
+        child: Card(
+          elevation: 0,
+          color: cardFill,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(radius),
+            onTap: onTap,
+            child: Stack(children: [
+              if (note.bgKey != null)
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(radius),
+                    child: Image(
+                      image: ResizeImage(AssetImage(note.bgKey!), width: 1000, height: 1200),
+                      fit: BoxFit.cover,
+                      color: isDark ? Colors.black26 : Colors.black12,
+                      colorBlendMode: BlendMode.darken,
+                    ),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(18), // ↑/↓ controla “tamanho” do card
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      note.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 10),
+                    Divider(
+                      color: isDark ? const Color(0x80FFFFFF) : Colors.black12,
+                      thickness: 0.7,
+                      height: 2,
+                    ),
+                    const SizedBox(height: 10),
+                    Flexible(
+                      child: Text(
+                        note.body,
+                        maxLines: 6,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // ribbon fina
+              Positioned(
+                top: 10,
+                right: -50,
+                child: Transform.rotate(
+                  angle: 0.9,
+                  child: Container(
+                    width: 130,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.28 : 0.16),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        ),
       ),
     );
   }

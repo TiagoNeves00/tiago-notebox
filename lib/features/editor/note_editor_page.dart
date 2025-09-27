@@ -184,7 +184,7 @@ class _S extends ConsumerState<NoteEditorPage> {
               ),
             ),
           Padding(
-            padding: EdgeInsets.fromLTRB(12, topPad, 12, 12),
+            padding: EdgeInsets.fromLTRB(22, topPad, 22, 22),
             child: Column(
               children: [
                 TextField(
@@ -215,43 +215,11 @@ class _S extends ConsumerState<NoteEditorPage> {
                         ref.read(editorProvider.notifier).set(body: v),
                   ),
                 ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    icon: Icon(
-                      Icons.check_box_outlined,
-                      color: hasBg ? Colors.white : null,
-                    ),
-                    label: Text(
-                      'Checklist',
-                      style: TextStyle(color: hasBg ? Colors.white : null),
-                    ),
-                    onPressed: () =>
-                        _toggleChecklist(ref.read(editorProvider.notifier)),
-                  ),
-                ),
               ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  void _toggleChecklist(EditorCtrl ctrl) {
-    final t = ref.read(editorProvider).body;
-    final lines = t.split('\n');
-    if (lines.isEmpty) {
-      ctrl.set(body: '☑️ ');
-      return;
-    }
-    final i = lines.length - 1, L = lines[i].trimLeft();
-    final toggled = L.startsWith('☑️ ')
-        ? L.replaceFirst('☑️ ', '🟪 ')
-        : L.startsWith('🟪 ')
-        ? L.replaceFirst('🟪 ', '☑️ ')
-        : '☑️ ${L.isEmpty ? '' : L}';
-    lines[i] = lines[i].replaceFirst(lines[i].trimLeft(), toggled);
-    ctrl.set(body: lines.join('\n'));
   }
 }
