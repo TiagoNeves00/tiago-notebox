@@ -7,13 +7,32 @@ final searchQueryProvider = StateProvider<String>((_) => '');
 
 final notesProvider = StreamProvider((ref) {
   final db = ref.watch(dbProvider);
-  final f = ref.watch(folderFilterProvider);
-  final q = (db.select(db.notes)
-    ..orderBy([(t)=>OrderingTerm.desc(t.isFavorite), (t)=>OrderingTerm.desc(t.updatedAt)]));
-  switch (f) {
-    case All(): break;
-    case ById(:final id): q.where((t)=>t.folderId.equals(id)); break;
-    case Unfiled(): q.where((t)=>t.folderId.isNull()); break;
+  final filter = ref.watch(folderFilterProvider);
+  final query  = ref.watch(searchQueryProvider).trim();
+
+  final q = db.select(db.notes)
+    ..orderBy([
+      (t) => OrderingTerm(expression: t.isFavorite, mode: OrderingMode.desc),
+      (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
+    ]);
+
+  // filtro por pasta
+  switch (filter) {
+    case All():
+      break;
+    case ById(:final id):
+      q.where((t) => t.folderId.equals(id));
+      break;
+    case Unfiled():
+      q.where((t) => t.folderId.isNull());
+      break;
   }
-  return q.watch(); // + aplica search se tiveres
+
+  // busca (LIKE; troca para FTS5 quando quiseres)
+  if (query.isNotEmpty) {
+    final like = '%$query%';
+    q.where((t) => t.title.like(like) | t.body.like(like));
+  }
+
+  return q.watch();
 });

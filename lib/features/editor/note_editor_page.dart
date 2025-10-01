@@ -9,10 +9,12 @@ import 'package:notebox/data/repos/notes_repo.dart';
 import 'package:notebox/data/repos/revisions_repo.dart';
 import 'package:notebox/features/editor/editor_baseline.dart';
 import 'package:notebox/features/editor/editor_ctrl.dart';
+import 'package:notebox/theme/bg_text_palettes.dart';
 
 class NoteEditorPage extends ConsumerStatefulWidget {
   final int? noteId;
   const NoteEditorPage({super.key, this.noteId});
+
   @override
   ConsumerState<NoteEditorPage> createState() => _S();
 }
@@ -42,7 +44,7 @@ class _S extends ConsumerState<NoteEditorPage> {
         ctrl.load(d);
         ref.read(editorBaselineProvider.notifier).state = d;
       } else {
-        final d = const NoteDraft();
+        const d = NoteDraft();
         ctrl.load(d);
         ref.read(editorBaselineProvider.notifier).state = d;
       }
@@ -81,12 +83,26 @@ class _S extends ConsumerState<NoteEditorPage> {
       _bgPath = path;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final st = ref.watch(editorProvider);
     final base = ref.watch(editorBaselineProvider);
     final dirty = isDirty(st, base);
+
+    final pal = paletteFor(st.bgKey, Theme.of(context).brightness);
+
+    final titleStyle = TextStyle(
+      fontSize: 28,
+      fontWeight: FontWeight.w900,
+      color: pal.title,
+    );
+    final bodyStyle = TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      color: pal.body,
+    );
+    final hintStyle = TextStyle(color: pal.hint);
 
     if (_bgPath != st.bgKey) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -103,8 +119,7 @@ class _S extends ConsumerState<NoteEditorPage> {
       selection: _body.selection,
     );
 
-    final String? bg = st.bgKey;
-    final hasBg = bg != null;
+    final hasBg = st.bgKey != null;
 
     Future<void> save() async {
       final id = await ref
@@ -132,24 +147,6 @@ class _S extends ConsumerState<NoteEditorPage> {
       ref.read(editorBaselineProvider.notifier).state = st;
     }
 
-    final titleStyle = TextStyle(
-      fontSize: 28, // Increased font size
-      fontWeight: FontWeight.w900, // More bold
-      color: hasBg ? Colors.white : null,
-      shadows: hasBg
-        ? const [Shadow(blurRadius: 2, color: Colors.black26)]
-        : null,
-    );
-    final bodyStyle = TextStyle(
-      fontSize: 21, // Slightly bigger body text
-      fontWeight: FontWeight.w600, // More bold
-      color: hasBg ? Colors.white : null,
-      shadows: hasBg
-        ? const [Shadow(blurRadius: 1, color: Colors.black26)]
-        : null,
-    );
-    final hintStyle = TextStyle(color: hasBg ? Colors.white70 : null);
-
     final topPad = MediaQuery.paddingOf(context).top + kToolbarHeight - 30;
 
     return WillPopScope(
@@ -160,16 +157,16 @@ class _S extends ConsumerState<NoteEditorPage> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (bg != null)
+          if (st.bgKey != null)
             Positioned.fill(
               child: Image.asset(
-                bg,
+                st.bgKey!,
                 fit: BoxFit.cover,
                 alignment: Alignment.center,
                 filterQuality: FilterQuality.high,
               ),
             ),
-          if (bg != null)
+          if (st.bgKey != null)
             const Positioned.fill(
               child: IgnorePointer(
                 child: DecoratedBox(
@@ -199,7 +196,7 @@ class _S extends ConsumerState<NoteEditorPage> {
                       ref.read(editorProvider.notifier).set(title: v),
                 ),
                 const SizedBox(height: 12),
-                Divider(height: 1, color: hasBg ? Colors.white24 : null),
+                Divider(height: 1, color: pal.divider),
                 const SizedBox(height: 24),
                 Expanded(
                   child: TextField(

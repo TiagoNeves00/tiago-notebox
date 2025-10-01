@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:notebox/data/local/db.dart';
+import 'package:notebox/theme/bg_text_palettes.dart'; // <-- paletas por bg
 
-/// Borda neon ESTÁTICA igual aos ícones (rosa + glow .35, blur 12).
-/// Sem animação. Só traço na periferia.
+/// Card com borda neon estática + texto que adapta ao bg via paleta.
 class NoteCard extends StatelessWidget {
   final Note note;
   final VoidCallback onTap;
-  final Color color; // usado só na ribbon
+  final Color color; // ribbon
   final EdgeInsets outerPadding;
 
   const NoteCard({
@@ -19,23 +19,21 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cPink = Color(0xFFEA00FF); // igual aos ícones
+    const cPink = Color(0xFFEA00FF);
     const radius = 12.0;
-
-    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+    final pal = paletteFor(note.bgKey, Theme.of(context).brightness); // <- cores do texto
     final cardFill = cs.surfaceContainerHighest.withOpacity(isDark ? .92 : .96);
 
     return Padding(
       padding: outerPadding,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(radius +  2),
+          borderRadius: BorderRadius.circular(radius + 2),
           color: Colors.transparent,
-          border: Border.all(color: cPink, width: 0.1), // largura da borda
-          boxShadow: [
-            BoxShadow(color: cPink.withOpacity(.65), blurRadius: 1), // glow igual aos ícones
-          ],
+          border: Border.all(color: cPink, width: 0.8), // fino
+          boxShadow: [BoxShadow(color: cPink.withOpacity(.35), blurRadius: 12)],
         ),
         child: Card(
           elevation: 0,
@@ -59,7 +57,7 @@ class NoteCard extends StatelessWidget {
                   ),
                 ),
               Padding(
-                padding: const EdgeInsets.all(18), // ↑/↓ controla “tamanho” do card
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -67,30 +65,27 @@ class NoteCard extends StatelessWidget {
                       note.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w900),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: pal.title, // <- aplica paleta
+                          ),
                     ),
                     const SizedBox(height: 10),
-                    Divider(
-                      color: isDark ? const Color(0x80FFFFFF) : Colors.black12,
-                      thickness: 0.7,
-                      height: 2,
-                    ),
+                    Divider(color: pal.divider, thickness: 1, height: 2),
                     const SizedBox(height: 10),
                     Flexible(
                       child: Text(
                         note.body,
                         maxLines: 6,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: pal.body, // <- aplica paleta
+                            ),
                       ),
                     ),
                   ],
                 ),
               ),
-              // ribbon fina
               Positioned(
                 top: 10,
                 right: -50,

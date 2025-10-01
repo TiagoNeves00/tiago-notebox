@@ -37,51 +37,68 @@ class FolderChipsWrap extends ConsumerWidget {
             curve: Curves.easeOut,
             padding: mq.viewInsets,
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Material(
                   color: const Color(0xFF0E1720).withOpacity(.90),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Text('Nova pasta',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: tc,
-                        autofocus: true,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Nome da pasta',
-                          labelStyle: const TextStyle(color: Color(0xFFAED2FF)),
-                          filled: true,
-                          fillColor: const Color(0xFF0A1119),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: c2),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: c1, width: 1.6),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Nova pasta',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: tc,
-                        builder: (_, v, __) => SizedBox(
-                          width: double.infinity,
-                          child: NeonActionButton(
-                            icon: Icons.check,
-                            label: 'Guardar',
-                            enabled: v.text.trim().isNotEmpty,
-                            onPressed: () => Navigator.of(bctx, rootNavigator: true)
-                                .pop(tc.text.trim()),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: tc,
+                          autofocus: true,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Nome da pasta',
+                            labelStyle: const TextStyle(
+                              color: Color(0xFFAED2FF),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFF0A1119),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: c2),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: c1,
+                                width: 1.6,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ]),
+                        const SizedBox(height: 14),
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: tc,
+                          builder: (_, v, __) => SizedBox(
+                            width: double.infinity,
+                            child: NeonActionButton(
+                              icon: Icons.check,
+                              label: 'Guardar',
+                              enabled: v.text.trim().isNotEmpty,
+                              onPressed: () => Navigator.of(
+                                bctx,
+                                rootNavigator: true,
+                              ).pop(tc.text.trim()),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -98,10 +115,16 @@ class FolderChipsWrap extends ConsumerWidget {
         final outline = Theme.of(context).colorScheme.outlineVariant;
         const neonPink = Color(0xFFEA00FF);
 
-        Widget neonWrap({required bool selected, required Color glow, required Widget child}) {
+        Widget neonWrap({
+          required bool selected,
+          required Color glow,
+          required Widget child,
+        }) {
           return AnimatedContainer(
             duration: const Duration(milliseconds: 120),
-            margin: const EdgeInsets.symmetric(vertical: 1), // reduced vertical margin
+            margin: const EdgeInsets.symmetric(
+              vertical: 1,
+            ), // reduced vertical margin
             decoration: BoxDecoration(
               boxShadow: selected
                   ? [BoxShadow(color: glow.withOpacity(.35), blurRadius: 12)]
@@ -117,7 +140,7 @@ class FolderChipsWrap extends ConsumerWidget {
             child: Wrap(
               alignment: WrapAlignment.center,
               runAlignment: WrapAlignment.center,
-              spacing: 4,   // reduced horizontal spacing
+              spacing: 4, // reduced horizontal spacing
               runSpacing: 0, // reduced vertical spacing
               children: [
                 // Todas
@@ -128,9 +151,13 @@ class FolderChipsWrap extends ConsumerWidget {
                     label: const Text('Todas'),
                     selected: sel is All,
                     showCheckmark: false,
-                    side: BorderSide(color: sel is All ? neonPink : outline, width: 1.2),
+                    side: BorderSide(
+                      color: sel is All ? neonPink : outline,
+                      width: 1.2,
+                    ),
                     onSelected: (_) =>
-                        ref.read(folderFilterProvider.notifier).state = const All(),
+                        ref.read(folderFilterProvider.notifier).state =
+                            const All(),
                   ),
                 ),
 
@@ -148,26 +175,44 @@ class FolderChipsWrap extends ConsumerWidget {
                       label: Text(f.name),
                       selected: selected,
                       showCheckmark: false,
-                      side: BorderSide(color: selected ? neon : outline, width: 1.2),
+                      side: BorderSide(
+                        color: selected ? neon : outline,
+                        width: 1.2,
+                      ),
                       avatar: CircleAvatar(backgroundColor: dot, radius: 6),
                       onSelected: (_) =>
-                          ref.read(folderFilterProvider.notifier).state = ById(f.id),
+                          ref.read(folderFilterProvider.notifier).state = ById(
+                            f.id,
+                          ),
                     ),
                   );
                 }),
 
-                // Adicionar
-                ChoiceChip(
-                  label: const Text(''),
+                // Adicionar (icon centered, same vertical size as other chips)
+                neonWrap(
                   selected: false,
-                  showCheckmark: false,
-                  side: BorderSide(color: outline, width: 1.2),
-                  avatar: const Icon(Icons.add, size: 22),
-                  onSelected: (_) async {
-                    final name = await _editName(context, '');
-                    if (name == null || name.isEmpty) return;
-                    await db.into(db.folders).insert(FoldersCompanion.insert(name: name));
-                  },
+                  glow: neonPink,
+                  child: ChoiceChip(
+                    label: const Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Invisible text reserves the same height as text chips
+                        Opacity(opacity: 0, child: Text('Todas')),
+                        Icon(Icons.add, size: 16.5),
+                      ],
+                    ),
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 1),
+                    selected: false,
+                    showCheckmark: false,
+                    side: BorderSide(color: outline, width: 1.2),
+                    onSelected: (_) async {
+                      final name = await _editName(context, '');
+                      if (name == null || name.isEmpty) return;
+                      await db
+                          .into(db.folders)
+                          .insert(FoldersCompanion.insert(name: name));
+                    },
+                  ),
                 ),
               ],
             ),

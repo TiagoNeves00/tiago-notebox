@@ -1,12 +1,44 @@
 import 'package:drift/drift.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notebox/data/local/db.dart';
 import 'package:notebox/data/local/db_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NotesRepo {
   final AppDb db;
   NotesRepo(this.db);
 
+  /// Stream com filtros opcionais + busca (LIKE por default).
+  Stream<List<Note>> watchFiltered({
+    int? folderId,
+    String query = '',
+    bool onlyUnfiled = false,
+  }) {
+    final sel = db.select(db.notes)
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.isFavorite, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
+      ]);
+
+    if (onlyUnfiled) {
+      sel.where((t) => t.folderId.isNull());
+    } else if (folderId != null) {
+      sel.where((t) => t.folderId.equals(folderId));
+    }
+
+    if (query.trim().isNotEmpty) {
+      final like = '%${query.trim()}%';
+      sel.where((t) => t.title.like(like) | t.body.like(like));
+      // Se tiveres FTS5:
+      // final fts = db.notesFts;
+      // final q = '${query.trim()}*';
+      // final j = sel.join([innerJoin(fts, fts.rowid.equalsExp(db.notes.id))])..where(fts.match(q));
+      // return j.watch().map((rows) => rows.map((r) => r.readTable(db.notes)).toList());
+    }
+
+    return sel.watch();
+  }
+
+  // API existente (mantida)
   Stream<List<Note>> watchAll({int? folderId, int? tagId, String? query}) {
     final base = db.select(db.notes)
       ..orderBy([
@@ -23,21 +55,13 @@ class NotesRepo {
       innerJoin(db.noteTags, db.noteTags.noteId.equalsExp(db.notes.id)),
     ])..where(db.noteTags.tagId.equals(tagId));
 
-    return joined.watch().map(
-      (rows) => rows.map((r) => r.readTable(db.notes)).toList(),
-    );
+    return joined.watch().map((rows) => rows.map((r) => r.readTable(db.notes)).toList());
   }
 
   Future<int> add(String title, String body, {int? folderId}) {
-    return db
-        .into(db.notes)
-        .insert(
-          NotesCompanion.insert(
-            title: title,
-            body: body,
-            folderId: Value(folderId),
-          ),
-        );
+    return db.into(db.notes).insert(
+      NotesCompanion.insert(title: title, body: body, folderId: Value(folderId)),
+    );
   }
 
   Future<int> upsert({
@@ -50,18 +74,16 @@ class NotesRepo {
   }) async {
     final now = DateTime.now();
     if (id == null) {
-      return db
-          .into(db.notes)
-          .insert(
-            NotesCompanion.insert(
-              title: title,
-              body: body,
-              color: Value(color),
-              folderId: Value(folderId),
-              bgKey: Value(bgKey),
-              updatedAt: Value(now),
-            ),
-          );
+      return db.into(db.notes).insert(
+        NotesCompanion.insert(
+          title: title,
+          body: body,
+          color: Value(color),
+          folderId: Value(folderId),
+          bgKey: Value(bgKey),
+          updatedAt: Value(now),
+        ),
+      );
     } else {
       await (db.update(db.notes)..where((t) => t.id.equals(id))).write(
         NotesCompanion(
