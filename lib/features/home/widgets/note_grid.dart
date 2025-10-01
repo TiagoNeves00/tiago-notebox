@@ -18,20 +18,19 @@ class NoteGrid extends ConsumerWidget {
 
     Color resolveColor(Note n) {
       if (n.color != null) return Color(n.color!);
-      final folderColor = (n.folderId != null) ? colorsMap[n.folderId!] : null;
-      return folderColor != null
-          ? Color(folderColor)
-          : Theme.of(context).colorScheme.outlineVariant;
+      final c = n.folderId != null ? colorsMap[n.folderId!] : null;
+      return c != null ? Color(c) : Theme.of(context).colorScheme.outlineVariant;
     }
 
-    if (notes.isEmpty) {
-      return const Center(child: Text('Sem notas'));
-    }
+    if (notes.isEmpty) return const Center(child: Text('Sem notas'));
 
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
+      // topo 0 -> cola ao divisor fixo
+      padding: const EdgeInsets.fromLTRB(12, 32, 12, 12),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, crossAxisSpacing: 8, mainAxisSpacing: 16,
+        crossAxisCount: 2,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 16,
       ),
       itemCount: notes.length,
       itemBuilder: (_, i) {
@@ -43,5 +42,5 @@ class NoteGrid extends ConsumerWidget {
         );
       },
     );
-    }
+  }
 }

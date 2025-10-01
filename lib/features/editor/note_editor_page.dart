@@ -118,9 +118,7 @@ class _S extends ConsumerState<NoteEditorPage> {
       text: st.body,
       selection: _body.selection,
     );
-
-    final hasBg = st.bgKey != null;
-
+    
     Future<void> save() async {
       final id = await ref
           .read(notesRepoProvider)

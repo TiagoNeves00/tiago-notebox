@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:notebox/data/local/db.dart';
-import 'package:notebox/theme/bg_text_palettes.dart'; // <-- paletas por bg
+import 'package:notebox/theme/bg_text_palettes.dart';
 
-/// Card com borda neon estática + texto que adapta ao bg via paleta.
+/// Borda = cor da pasta  |  Glow = igual ao ChoiceChip selecionado (.35, blur 12)
 class NoteCard extends StatelessWidget {
   final Note note;
   final VoidCallback onTap;
-  final Color color; // ribbon
+  final Color color; // cor da pasta (borda + glow)
   final EdgeInsets outerPadding;
 
   const NoteCard({
@@ -19,12 +19,13 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cPink = Color(0xFFEA00FF);
     const radius = 12.0;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
-    final pal = paletteFor(note.bgKey, Theme.of(context).brightness); // <- cores do texto
-    final cardFill = cs.surfaceContainerHighest.withOpacity(isDark ? .92 : .96);
+    final pal = paletteFor(note.bgKey, Theme.of(context).brightness);
+
+    // fundo coerente com tema Neon (sem hardcode)
+    final cardFill = cs.surface.withOpacity(isDark ? .92 : .96);
 
     return Padding(
       padding: outerPadding,
@@ -32,14 +33,18 @@ class NoteCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(radius + 2),
           color: Colors.transparent,
-          border: Border.all(color: cPink, width: 0.8), // fino
-          boxShadow: [BoxShadow(color: cPink.withOpacity(.35), blurRadius: 12)],
+          border: Border.all(color: color, width: 0.7),
+          boxShadow: [
+            BoxShadow(color: color.withOpacity(.35), blurRadius: 12),
+          ],
         ),
         child: Card(
           elevation: 0,
           color: cardFill,
           clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radius),
+          ),
           child: InkWell(
             borderRadius: BorderRadius.circular(radius),
             onTap: onTap,
@@ -49,7 +54,11 @@ class NoteCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(radius),
                     child: Image(
-                      image: ResizeImage(AssetImage(note.bgKey!), width: 1000, height: 1200),
+                      image: ResizeImage(
+                        AssetImage(note.bgKey!),
+                        width: 1000,
+                        height: 1200,
+                      ),
                       fit: BoxFit.cover,
                       color: isDark ? Colors.black26 : Colors.black12,
                       colorBlendMode: BlendMode.darken,
@@ -65,10 +74,10 @@ class NoteCard extends StatelessWidget {
                       note.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: pal.title, // <- aplica paleta
-                          ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w900, color: pal.title),
                     ),
                     const SizedBox(height: 10),
                     Divider(color: pal.divider, thickness: 1, height: 2),
@@ -78,34 +87,13 @@ class NoteCard extends StatelessWidget {
                         note.body,
                         maxLines: 6,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: pal.body, // <- aplica paleta
-                            ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: pal.body),
                       ),
                     ),
                   ],
-                ),
-              ),
-              Positioned(
-                top: 10,
-                right: -50,
-                child: Transform.rotate(
-                  angle: 0.9,
-                  child: Container(
-                    width: 130,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(isDark ? 0.28 : 0.16),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ),
             ]),

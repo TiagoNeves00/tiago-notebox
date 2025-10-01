@@ -29,6 +29,7 @@ class FolderChipsWrap extends ConsumerWidget {
         isScrollControlled: true,
         useSafeArea: true,
         backgroundColor: Colors.transparent,
+        useRootNavigator: false,
         showDragHandle: true,
         builder: (bctx) {
           final mq = MediaQuery.of(bctx);
@@ -90,10 +91,7 @@ class FolderChipsWrap extends ConsumerWidget {
                               icon: Icons.check,
                               label: 'Guardar',
                               enabled: v.text.trim().isNotEmpty,
-                              onPressed: () => Navigator.of(
-                                bctx,
-                                rootNavigator: true,
-                              ).pop(tc.text.trim()),
+                              onPressed: () => Navigator.of(bctx).pop(tc.text.trim()),
                             ),
                           ),
                         ),

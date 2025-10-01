@@ -10,25 +10,26 @@ class BgTextPalette {
 }
 
 const _w = Colors.white, _w70 = Colors.white70, _w24 = Color(0x3DFFFFFF);
-const _b = Colors.black, _b70 = Colors.black87, _b24 = Color(0x24000000);
+const _b = Color.fromARGB(255, 54, 54, 54), _b70 = Color.fromARGB(179, 54, 54, 54), _b24 = Color.fromARGB(61, 54, 54, 54);
+const _p = Color.fromARGB(255, 146, 0, 61), _p70 = Color.fromARGB(179, 146, 0, 61), _p24 = Color.fromARGB(36, 255, 0, 212);
 
 // PREENCHER com as tuas cores estudadas:
 const Map<String, BgTextPalette> kBgTextPalettes = {
   // :D
   'assets/note_bg/old_paper_bg.webp': BgTextPalette(
-    title: _b, body: _b70, hint: _b70, divider: _b24, icons: _b),
+    title: _w, body: _w70, hint: _w70, divider: _w24, icons: _w),
   // :D
   'assets/note_bg/purple_flower_bg.webp': BgTextPalette(
-    title: _b, body: _b70, hint: _b70, divider: _b24, icons: _b),
-  // :D 
+    title: _p, body: _p70, hint: _p24, divider: _p24, icons: _p),
+  // :D
   'assets/note_bg/blue_ocean_sky_bg.webp': BgTextPalette(
-    title: _b, body: _b70, hint: _b70, divider: _b24, icons: _b),
+    title: _w, body: _w70, hint: _w70, divider: _w24, icons: _w),
   // :D
   'assets/note_bg/orange_water_sky_bg.webp': BgTextPalette(
     title: _w, body: _w70, hint: _w70, divider: _w24, icons: _w),
   // :D
   'assets/note_bg/baby_blue_bg.webp': BgTextPalette(
-    title: _b, body: _b70, hint: _b70, divider: _b24, icons: _b),
+    title: _w, body: _w70, hint: _w70, divider: _w24, icons: _w),
   // :D
   'assets/note_bg/dark_night_bg.webp': BgTextPalette(
     title: _w, body: _w70, hint: _w70, divider: _w24, icons: _w),

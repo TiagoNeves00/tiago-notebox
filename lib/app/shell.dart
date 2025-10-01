@@ -47,7 +47,6 @@ class AppShell extends ConsumerWidget {
 
     final hasBg = isEdit && ref.watch(editorProvider).bgKey != null;
 
-    const white = Color(0xFFFFFFFF);
     const glowPink = Color(0xFFEA00FF);
 
     // helper para aplicar enabled/disabled mantendo NeonIconButton
