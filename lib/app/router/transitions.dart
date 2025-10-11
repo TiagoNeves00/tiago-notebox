@@ -1,7 +1,6 @@
 // lib/router/transitions.dart
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 typedef TB = Widget Function(BuildContext, Animation<double>, Animation<double>, Widget);
 
@@ -52,7 +51,7 @@ class Transitions {
   static TB cupertino = (_, a, sa, c) => CupertinoPageTransition(
         primaryRouteAnimation: a,
         secondaryRouteAnimation: sa,
-        child: c,
         linearTransition: true,
+        child: c,
       );
 }

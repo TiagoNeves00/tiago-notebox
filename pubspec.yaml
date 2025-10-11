@@ -26,8 +26,10 @@ dependencies:
   get: ^4.7.2
   flutter_markdown: ^0.7.7+1
   animations: ^2.0.11
-  just_audio: ^0.9.37
-  record: ^5.0.0
+  uuid: ^4.4.0
+
+  # SuperEditor compatível com uuid ^4
+  super_editor: ^0.3.0-dev.35
 
 dev_dependencies:
   flutter_test:

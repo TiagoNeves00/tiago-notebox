@@ -9,7 +9,6 @@ const _accent = Color(0xFF888888);
 
 final monoDarkScheme = const ColorScheme.dark().copyWith(
   surface: _bg,
-  background: _bg,
   primary: _accent,
   onPrimary: _txt,
   secondary: _txt2,

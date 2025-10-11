@@ -36,7 +36,7 @@ class _FolderPillState extends ConsumerState<FolderPill> {
             ? 'Sem pasta'
             : folders.firstWhere(
                 (f) => f.id == currentId,
-                orElse: () => Folder(id: -1, name: 'Pasta', order: 0),
+                orElse: () => const Folder(id: -1, name: 'Pasta', order: 0),
               ).name;
 
         final cInt = currentId != null ? colors[currentId] : null;

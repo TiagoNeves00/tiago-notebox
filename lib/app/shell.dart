@@ -50,7 +50,7 @@ class AppShell extends ConsumerWidget {
     const glowPink = Color(0xFFEA00FF);
 
     // helper para aplicar enabled/disabled mantendo NeonIconButton
-    Widget _neonIcon({
+    Widget neonIcon({
       required IconData icon,
       required VoidCallback? onPressed,
       String? tooltip,
@@ -139,7 +139,7 @@ class AppShell extends ConsumerWidget {
             ? [
                 IconTheme(
                   data: const IconThemeData(size: 32),
-                  child: _neonIcon(
+                  child: neonIcon(
                     icon: Icons.brightness_6,
                     tooltip: 'Tema',
                     glow: glowPink,
@@ -150,7 +150,7 @@ class AppShell extends ConsumerWidget {
                 const SizedBox(width: 8),
                 IconTheme(
                   data: const IconThemeData(size: 32),
-                  child: _neonIcon(
+                  child: neonIcon(
                     icon: Icons.folder_open,
                     tooltip: 'Pastas',
                     glow: glowPink,
@@ -160,7 +160,7 @@ class AppShell extends ConsumerWidget {
                 const SizedBox(width: 8),
                 IconTheme(
                   data: const IconThemeData(size: 32),
-                  child: _neonIcon(
+                  child: neonIcon(
                     icon: Icons.settings,
                     tooltip: 'Settings',
                     glow: glowPink,
@@ -178,7 +178,7 @@ class AppShell extends ConsumerWidget {
                       const SizedBox(width: 24),
                       IconTheme(
                         data: const IconThemeData(size: 32),
-                        child: _neonIcon(
+                        child: neonIcon(
                           icon: Icons.image_outlined,
                           tooltip: 'Customize',
                           glow: glowPink,
@@ -188,7 +188,7 @@ class AppShell extends ConsumerWidget {
                       const SizedBox(width: 8),
                       IconTheme(
                         data: const IconThemeData(size: 32),
-                        child: _neonIcon(
+                        child: neonIcon(
                           icon: Icons.check_circle_outline_rounded,
                           tooltip: 'Guardar',
                           glow: glowPink,

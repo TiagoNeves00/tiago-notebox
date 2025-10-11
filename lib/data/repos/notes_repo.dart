@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notebox/data/local/db.dart';
 import 'package:notebox/data/local/db_provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NotesRepo {
   final AppDb db;

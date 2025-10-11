@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notebox/features/editor/editor_ctrl.dart';
+import 'package:notebox/theme/bg_text_palettes.dart';
 
-const _bgKeys = [
+const _imageBgKeys = [
   'assets/note_bg/old_paper_bg.webp',
   'assets/note_bg/purple_flower_bg.webp',
   'assets/note_bg/blue_ocean_sky_bg.webp',
@@ -15,24 +15,18 @@ const _bgKeys = [
   'assets/note_bg/night_city_1_bg.webp',
 ];
 
-const _solidColors = <int>[
-  // bases escuras
-  0xFF0B1220, // navy profundo
-  0xFF111827, // charcoal azul
-  0xFF1B263B, // slate azulado
-
-  // neons suaves
-  0xFF60A5FA, // azul elétrico soft
-  0xFF22D3EE, // aqua/cyan suave
-  0xFFA78BFA, // violeta neon calmo
-  0xFFF472B6, // magenta/pink suave
-  0xFF34D399, // mint/emerald leve
-  0xFFF59E0B, // amber neon contido
-
-  // tons de respiro
-  0xFFFDA4AF, // peach rosado
-  0xFFE2E8F0, // slate-200
-  0xFFF8FAFC, // quase branco
+/// Paleta calma com toques neon — guardamos como **chaves sólidas**.
+/// Usa SEMPRE o prefixo `solid:` para evitar tentativas de `Image.asset`.
+const _solidHex = <String>[
+  'solid:#08131D', // deep navy
+  'solid:#0C0F17', // graphite blue
+  'solid:#17202B', // dark slate
+  'solid:#8AD8FF', // soft cyan
+  'solid:#61E3CF', // mint neon
+  'solid:#A89DFF', // lilac glow
+  'solid:#FFA6D8', // pink glow
+  'solid:#FFE082', // warm amber
+  'solid:#F6F7FB', // near-white
 ];
 
 Future<void> showNoteBgPicker(BuildContext c, WidgetRef ref) async {
@@ -41,80 +35,76 @@ Future<void> showNoteBgPicker(BuildContext c, WidgetRef ref) async {
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => DraggableScrollableSheet(
-      initialChildSize: .7, minChildSize: .3, maxChildSize: .95, expand: false,
-      builder: (ctx, scroll) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: Stack(children: [
-          Positioned.fill(child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12))),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF0E1720).withOpacity(.90),
-                border: Border.all(color: const Color(0xFF00F5FF).withOpacity(.55)),
-                boxShadow: [BoxShadow(color: const Color(0xFFEA00FF).withOpacity(.20), blurRadius: 24)],
-              ),
-            ),
-          ),
-          DefaultTabController(
-            length: 2,
-            child: Column(children: [
-              const TabBar(
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorColor: Color(0xFFEA00FF),
-                labelColor: Colors.white,
-                unselectedLabelColor: Color(0xFFAEC0D1),
-                tabs: [Tab(text: 'Cores'), Tab(text: 'Imagens')],
-              ),
-              Expanded(
-                child: TabBarView(children: [
+    builder: (_) => DefaultTabController(
+      length: 2,
+      child: DraggableScrollableSheet(
+        initialChildSize: .62,
+        minChildSize: .30,
+        maxChildSize: .95,
+        expand: false,
+        builder: (ctx, scroll) => Column(
+          children: [
+            const TabBar(tabs: [Tab(text: 'Cores'), Tab(text: 'Imagens')]),
+            Expanded(
+              child: TabBarView(
+                children: [
                   // CORES
                   GridView.builder(
                     controller: scroll,
                     padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
-                    itemCount: _solidColors.length,
+                      crossAxisCount: 3, crossAxisSpacing: 10, mainAxisSpacing: 10),
+                    itemCount: _solidHex.length,
                     itemBuilder: (_, i) {
-                      final color = Color(_solidColors[i]);
+                      final key = _solidHex[i];
+                      final color = parseSolid(key) ?? const Color(0xFF101418);
                       return InkWell(
-                        onTap: () => Navigator.pop(ctx, 'solid:${color.value.toRadixString(16)}'),
-                        child: DecoratedBox(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => Navigator.pop(ctx, key),
+                        child: Container(
                           decoration: BoxDecoration(
                             color: color,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white24, width: 1),
-                            boxShadow: [BoxShadow(color: color.withOpacity(.35), blurRadius: 10)],
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white10),
                           ),
-                          child: const SizedBox.expand(),
                         ),
                       );
                     },
                   ),
+
                   // IMAGENS
                   GridView.builder(
                     controller: scroll,
                     padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
-                    itemCount: _bgKeys.length,
+                    itemCount: _imageBgKeys.length,
                     itemBuilder: (_, i) => InkWell(
-                      onTap: () => Navigator.pop(ctx, _bgKeys[i]),
+                      onTap: () => Navigator.pop(ctx, _imageBgKeys[i]),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(_bgKeys[i], fit: BoxFit.cover),
+                        child: Image.asset(_imageBgKeys[i], fit: BoxFit.cover),
                       ),
                     ),
                   ),
-                ]),
+                ],
               ),
-            ]),
-          ),
-        ]),
+            ),
+            ListTile(
+              leading: const Icon(Icons.block),
+              title: const Text('Sem fundo'),
+              onTap: () => Navigator.pop(ctx, null),
+            ),
+          ],
+        ),
       ),
     ),
   );
 
-  ref.read(editorProvider.notifier).setBg(chosen);
+  // Aplicar com segurança (evita modificar provider durante build)
+  if (c.mounted) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(editorProvider.notifier).setBg(chosen);
+    });
+  }
 }

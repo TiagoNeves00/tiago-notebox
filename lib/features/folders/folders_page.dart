@@ -1,5 +1,6 @@
 /// FoldersPage — menus “Editar nome / Nova pasta” como bottom sheet neon (desliza de baixo).
 /// Mantém o botão "Nova pasta" escondido enquanto o sheet está aberto.
+library;
 
 import 'dart:ui';
 

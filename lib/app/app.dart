@@ -40,7 +40,6 @@ const _accent_light = Color(0xFF757575);
 
 final monoDarkScheme = const ColorScheme.dark().copyWith(
   surface: _bg,
-  background: _bg,
   primary: _accent,
   onPrimary: _txt,
   secondary: _txt2,
@@ -54,7 +53,6 @@ final monoDarkScheme = const ColorScheme.dark().copyWith(
 
 final monoLightScheme = const ColorScheme.light().copyWith(
   surface: _bgLight,
-  background: _bgLight,
   primary: _accent_light,
   onPrimary: _txtDark,
   secondary: _txtSec,

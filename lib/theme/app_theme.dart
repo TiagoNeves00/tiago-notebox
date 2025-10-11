@@ -58,7 +58,7 @@ ThemeData neonDarkTheme() {
 
   final cs = const ColorScheme.dark(
     surface: surface, onSurface: onSurface, primary: pink, secondary: cyan,
-    outlineVariant: outline, background: bg,
+    outlineVariant: outline,
   );
 
   return ThemeData(

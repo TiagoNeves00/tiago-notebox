@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class MarkdownController extends TextEditingController {
-  MarkdownController({String? text}) : super(text: text);
+  MarkdownController({super.text});
   @override
   TextSpan buildTextSpan({required BuildContext context, TextStyle? style, bool? withComposing}) {
-    final s = this.text;
+    final s = text;
     final List<TextSpan> spans = [];
     final bold = RegExp(r'\*\*(.+?)\*\*');
     int idx = 0;

@@ -21,7 +21,7 @@ class FolderChipsWrap extends ConsumerWidget {
     final db = ref.watch(dbProvider);
 
     // Neon sheet (sobe com teclado)
-    Future<String?> _editName(BuildContext ctx, [String initial = '']) async {
+    Future<String?> editName(BuildContext ctx, [String initial = '']) async {
       final tc = TextEditingController(text: initial);
       const c1 = Color(0xFFEA00FF), c2 = Color(0xFF00F5FF);
       return showModalBottomSheet<String>(
@@ -204,7 +204,7 @@ class FolderChipsWrap extends ConsumerWidget {
                     showCheckmark: false,
                     side: BorderSide(color: outline, width: 1.2),
                     onSelected: (_) async {
-                      final name = await _editName(context, '');
+                      final name = await editName(context, '');
                       if (name == null || name.isEmpty) return;
                       await db
                           .into(db.folders)

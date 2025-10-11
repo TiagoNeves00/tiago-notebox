@@ -1,43 +1,68 @@
 import 'package:flutter/material.dart';
 
-class BgPalette {
+class BgTextPalette {
   final Color title;
   final Color body;
   final Color hint;
   final Color divider;
-  const BgPalette(this.title, this.body, this.hint, this.divider);
+  const BgTextPalette({
+    required this.title,
+    required this.body,
+    required this.hint,
+    required this.divider,
+  });
+
+  factory BgTextPalette.lightOnDark() => const BgTextPalette(
+        title: Colors.white,
+        body: Color(0xFFEFEFF1),
+        hint: Color(0x99FFFFFF),
+        divider: Color(0x33FFFFFF),
+      );
+
+  factory BgTextPalette.darkOnLight() => const BgTextPalette(
+        title: Color(0xFF0B1220),
+        body: Color(0xFF141B2A),
+        hint: Color(0x66141B2A),
+        divider: Color(0x22141B2A),
+      );
 }
 
-/// Parser de cor sólida: "solid:<hexIntSem0x>"
+/// Formatos aceites para sólidos:
+///  - solid:#RRGGBB  |  solid:#AARRGGBB
+///  - solid:white | solid:black
+/// Retorna null se não for sólido **ou** se for inválido (sem lançar exceções).
 Color? parseSolid(String? key) {
-  if (key == null) return null;
-  if (!key.startsWith('solid:')) return null;
-  final hex = key.split(':').last;
-  // aceita "ff00ff" ou "ff00ffaa" etc; se faltar alpha, assume 0xFF
-  final val = int.parse(hex, radix: 16);
-  // se veio sem alpha (<= 0xFFFFFF), força 0xFF000000 |
-  final withAlpha = (val <= 0xFFFFFF) ? (0xFF000000 | val) : val;
-  return Color(withAlpha);
+  if (key == null || !key.startsWith('solid:')) return null;
+
+  final v = key.substring('solid:'.length).trim();
+  if (v.isEmpty) return null;
+
+  switch (v.toLowerCase()) {
+    case 'white':
+      return Colors.white;
+    case 'black':
+      return Colors.black;
+  }
+
+  if (v.startsWith('#')) {
+    final hex = v.substring(1);
+    try {
+      final normalized = hex.length == 6 ? 'FF$hex' : hex; // garante alpha
+      return Color(int.parse(normalized, radix: 16));
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
 }
 
-/// Paleta para imagem conhecida OU cor sólida.
-/// Para sólidos: ajusta contraste com base na luminância.
-BgPalette paletteFor(String? bgKey, Brightness brightness) {
-  // Sólidos
+BgTextPalette paletteFor(String? bgKey, Brightness system) {
   final solid = parseSolid(bgKey);
   if (solid != null) {
-    final lum = solid.computeLuminance(); // 0..1
-    final on = lum > 0.5 ? const Color(0xFF111111) : Colors.white;
-    final hint = on.withOpacity(0.70);
-    final div = on.withOpacity(0.22);
-    return BgPalette(on, on.withOpacity(.92), hint, div);
+    final lum = solid.computeLuminance();
+    return lum > 0.5 ? BgTextPalette.darkOnLight() : BgTextPalette.lightOnDark();
   }
-
-  // IMAGENS → usa presets simples por chave (mantém os existentes se já tinhas).
-  // Defaults por brilho do tema como fallback.
-  if (bgKey?.contains('dark') == true || brightness == Brightness.dark) {
-    return const BgPalette(Colors.white, Color(0xFFECECEC), Colors.white70, Colors.white24);
-  } else {
-    return const BgPalette(Color(0xFF111111), Color(0xFF1E1E1E), Color(0x99000000), Color(0x33000000));
-  }
+  return system == Brightness.light
+      ? BgTextPalette.darkOnLight()
+      : BgTextPalette.lightOnDark();
 }

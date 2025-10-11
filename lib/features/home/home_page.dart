@@ -2,7 +2,6 @@
 // HomePage com search neon, clear "x", chips que desaparecem com query
 // e divisor neon FIXO no topo da lista (sem “buraco” ao fazer scroll).
 
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -47,13 +46,13 @@ class HomePage extends ConsumerWidget {
 
     Widget searchBar() {
       final ctrl = ref.watch(_searchControllerProvider);
-      const _h = 84.0, pink = Color(0xFFEA00FF);
+      const h = 84.0, pink = Color(0xFFEA00FF);
       final outline = Theme.of(context).colorScheme.outlineVariant;
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOutCubic,
-        height: showSearch ? _h : 22,
+        height: showSearch ? h : 22,
         child: ClipRect(
           child: Align(
             alignment: Alignment.topCenter,
