@@ -1,7 +1,6 @@
 import 'package:flutter/services.dart';
 
 const _kTok0 = '[[chk:0]] ';
-const _kTok1 = '[[chk:1]] ';
 final  _reTok = RegExp(r'^\[\[chk:(0|1)\]\]\s');
 
 class ChecklistFormatter extends TextInputFormatter {

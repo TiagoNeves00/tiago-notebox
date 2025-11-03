@@ -22,8 +22,11 @@ class _SplashPageState extends State<SplashPage> {
 
     // define aqui as tuas tarefas reais de arranque
     final steps = <Future<void> Function()>[
+      // ignore: inference_failure_on_instance_creation
       () async { /* open DB */ await Future.delayed(const Duration(milliseconds: 300)); },
+      // ignore: inference_failure_on_instance_creation
       () async { /* load settings */ await Future.delayed(const Duration(milliseconds: 300)); },
+      // ignore: inference_failure_on_instance_creation
       () async { /* warm caches */ await Future.delayed(const Duration(milliseconds: 400)); },
     ];
 
@@ -35,6 +38,7 @@ class _SplashPageState extends State<SplashPage> {
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
+      // ignore: inference_failure_on_instance_creation
       MaterialPageRoute(builder: (_) => const HomePage()),
     );
   }

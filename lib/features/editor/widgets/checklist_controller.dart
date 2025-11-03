@@ -54,8 +54,6 @@ class ChecklistController extends TextEditingController {
   // já tem token → não faz nada
   if (_reTok.hasMatch(lines[lineIdx])) return;
 
-  final sel = selection;
-  final caretBefore = sel.baseOffset;
 
   // insere token no início da linha
   lines[lineIdx] = '$_kTok0${lines[lineIdx]}';
@@ -95,7 +93,7 @@ class ChecklistController extends TextEditingController {
   final newText = lines.join('\n');
 
   // tenta manter o cursor na mesma posição relativa ao fim da linha
-  final lineStart = _lineStartOffset(newText, idx);
+  _lineStartOffset(newText, idx);
   final diff = lines[idx].length - beforeLen;
   final newCaret = (caretBefore + diff).clamp(0, newText.length);
 

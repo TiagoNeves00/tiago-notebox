@@ -10,7 +10,7 @@ class NoteBoxApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mode = ref.watch(themeModeProvider);
+    ref.watch(themeModeProvider);
     return DynamicColorBuilder(
       builder: (lightDyn, darkDyn) {
         return MaterialApp.router(
@@ -64,40 +64,4 @@ final monoLightScheme = const ColorScheme.light().copyWith(
   outlineVariant: _line_light,
 );
 
-ThemeData _darkMono() => ThemeData(
-  useMaterial3: true,
-  colorScheme: monoDarkScheme,
-  scaffoldBackgroundColor: monoDarkScheme.surface,
-  dividerTheme: DividerThemeData(color: monoDarkScheme.outline, thickness: 1),
-  appBarTheme: AppBarTheme(
-    backgroundColor: Colors.transparent,
-    surfaceTintColor: Colors.transparent,
-    foregroundColor: monoDarkScheme.onSurface,
-  ),
-  iconTheme: IconThemeData(color: monoDarkScheme.onSurface),
-  chipTheme: ChipThemeData(
-    side: BorderSide(color: monoDarkScheme.outline),
-    backgroundColor: monoDarkScheme.surface,
-    selectedColor: _accent.withOpacity(.18),
-    labelStyle: TextStyle(color: monoDarkScheme.onSurface),
-  ),
-);
 
-ThemeData _lightMono() => ThemeData(
-  useMaterial3: true,
-  colorScheme: monoLightScheme,
-  scaffoldBackgroundColor: monoLightScheme.surface,
-  dividerTheme: DividerThemeData(color: monoLightScheme.outline, thickness: 1),
-  appBarTheme: AppBarTheme(
-    backgroundColor: Colors.transparent,
-    surfaceTintColor: Colors.transparent,
-    foregroundColor: monoLightScheme.onSurface,
-  ),
-  iconTheme: IconThemeData(color: monoLightScheme.onSurface),
-  chipTheme: ChipThemeData(
-    side: BorderSide(color: monoLightScheme.outline),
-    backgroundColor: monoLightScheme.surface,
-    selectedColor: _accent.withOpacity(.15),
-    labelStyle: TextStyle(color: monoLightScheme.onSurface),
-  ),
-);

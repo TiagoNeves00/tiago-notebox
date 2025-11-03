@@ -111,7 +111,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         )..where((t) => t.id.equals(widget.noteId!))).getSingle();
         final d = NoteDraft(
           title: n.title,
-          body: n.body ?? '',
+          body: n.body,
           color: n.color,
           folderId: n.folderId,
           bgKey: n.bgKey,
@@ -119,7 +119,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         ctrl.load(d);
         ref.read(editorBaselineProvider.notifier).state = d;
         _title.text = d.title;
-        _lineCtrl.setText(d.body ?? '');
+        _lineCtrl.setText(d.body);
         setState(() {});
       } else {
         const d = NoteDraft();
@@ -215,7 +215,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   Expanded(
                     child: LineEditor(
                       controller: _lineCtrl,
-                      initialText: st.body ?? '',
+                      initialText: st.body,
                       style: bodyStyle,
                       onChanged: (txt) =>
                           ref.read(editorProvider.notifier).set(body: txt),

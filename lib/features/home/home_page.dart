@@ -35,9 +35,6 @@ final _searchControllerProvider = Provider.autoDispose<TextEditingController>((
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
-  static const _kDividerHeight = 22.0; // espaço reservado para o divisor
-  static const _kDividerHPad = 42.0;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final showSearch = ref.watch(_searchVisibleProvider);
