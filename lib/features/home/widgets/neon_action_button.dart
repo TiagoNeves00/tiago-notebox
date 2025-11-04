@@ -26,9 +26,8 @@ class NeonActionButton extends StatefulWidget {
 
 class _NeonActionButtonState extends State<NeonActionButton>
     with TickerProviderStateMixin {
-  // Core neon colors (match your ModernFab palette)
-  static const Color _c1 = Color(0xFFEA00FF); // pink/magenta
-  static const Color _c2 = Color.fromARGB(172, 95, 2, 38); // deep magenta
+  static const Color _c1 = Color(0xFFEA00FF);
+  static const Color _c2 = Color.fromARGB(172, 95, 2, 38);
 
   late final AnimationController _loop =
       AnimationController(vsync: this, duration: const Duration(seconds: 4))
@@ -60,21 +59,21 @@ class _NeonActionButtonState extends State<NeonActionButton>
           animation: _loop,
           builder: (context, _) {
             final angle = _loop.value * 2 * math.pi;
-            final pulse = (math.sin(angle) + 1) / 2; // 0..1
+            final pulse = (math.sin(angle) + 1) / 2;
             final ringAlpha = 0.55 + 0.45 * pulse;
 
-            // Outer glow
+            // 🔹 Blur reduzido (antes 18–36, agora 10–18)
             final shadow = [
               BoxShadow(
                 color: _c1.withOpacity(.18 + .12 * pulse),
-                blurRadius: 18 + 18 * pulse,
-                spreadRadius: 1 + 2 * pulse,
+                blurRadius: 10 + 8 * pulse,
+                spreadRadius: 0.8 + 1.2 * pulse,
               ),
             ];
 
             return Container(
               constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
-              padding: const EdgeInsets.all(2.0), // ring thickness
+              padding: const EdgeInsets.all(2.0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(widget.borderRadius + 2),
                 gradient: SweepGradient(
@@ -115,7 +114,6 @@ class _NeonActionButtonState extends State<NeonActionButton>
       ),
     );
 
-    // Accessibility + enabled gate
     return Semantics(
       button: true,
       enabled: widget.enabled,
