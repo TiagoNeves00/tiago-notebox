@@ -78,11 +78,11 @@ class _NoteCardState extends ConsumerState<NoteCard> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius + 2),
                 color: Colors.transparent,
-                border: Border.all(color: widget.color, width: 0.7),
+                border: Border.all(color: widget.color, width: 3),
                 boxShadow: [
                   BoxShadow(
                     color: widget.color.withOpacity(.35),
-                    blurRadius: 10,
+                    blurRadius: 4,
                   ),
                 ],
               ),

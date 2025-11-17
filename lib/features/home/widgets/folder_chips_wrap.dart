@@ -125,7 +125,11 @@ class FolderChipsWrap extends ConsumerWidget {
             ), // reduced vertical margin
             decoration: BoxDecoration(
               boxShadow: selected
-                  ? [BoxShadow(color: glow.withOpacity(.35), blurRadius: 12)]
+                  ? [BoxShadow(
+                    color: glow.withOpacity(.9),
+                    blurRadius: 12,
+                    blurStyle: BlurStyle.normal
+                  )]
                   : const [],
             ),
             child: child,
@@ -151,7 +155,7 @@ class FolderChipsWrap extends ConsumerWidget {
                     showCheckmark: false,
                     side: BorderSide(
                       color: sel is All ? neonPink : outline,
-                      width: 1.2,
+                      width: 1.8,
                     ),
                     onSelected: (_) =>
                         ref.read(folderFilterProvider.notifier).state =
@@ -175,7 +179,7 @@ class FolderChipsWrap extends ConsumerWidget {
                       showCheckmark: false,
                       side: BorderSide(
                         color: selected ? neon : outline,
-                        width: 1.2,
+                        width: 1.8,
                       ),
                       avatar: CircleAvatar(backgroundColor: dot, radius: 6),
                       onSelected: (_) =>
