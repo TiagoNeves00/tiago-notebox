@@ -2,7 +2,6 @@
 // HomePage com search neon, clear "x", chips que desaparecem com query
 // e divisor neon FIXO no topo da lista (sem “buraco” ao fazer scroll).
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,7 +58,12 @@ class HomePage extends ConsumerWidget {
               curve: Curves.easeOutCubic,
               opacity: showSearch ? 1 : 0,
               child: Padding(
-                padding: const EdgeInsets.only(top: 14, left: 16, right: 16, bottom: 14),
+                padding: const EdgeInsets.only(
+                  top: 14,
+                  left: 16,
+                  right: 16,
+                  bottom: 14,
+                ),
                 child: Center(
                   child: SizedBox(
                     height: 60,
@@ -172,12 +176,10 @@ class HomePage extends ConsumerWidget {
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           child: Column(
             children: [
-              
               searchBar(),
 
-              if (ref.watch(_searchVisibleProvider)) const SizedBox(height: 12), // ↑ ajusta aqui
-
-
+              if (ref.watch(_searchVisibleProvider))
+                const SizedBox(height: 12), // ↑ ajusta aqui
               // Chips desaparecem quando há query
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 260),

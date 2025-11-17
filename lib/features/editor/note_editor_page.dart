@@ -20,29 +20,49 @@ class NoteEditorPage extends ConsumerStatefulWidget {
   ConsumerState<NoteEditorPage> createState() => _NoteEditorPageState();
 }
 
-class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
+class _NoteEditorPageState extends ConsumerState<NoteEditorPage>
+    with TickerProviderStateMixin {
   final _title = TextEditingController();
   final _titleNode = FocusNode();
-
   final _lineCtrl = LineEditorController();
 
   ui.Image? _bgImg;
   String? _bgPath;
 
+  late AnimationController _bgAnim;
+  late AnimationController _contentAnim;
+
   Future<void> _loadBgImage(BuildContext ctx, String? path) async {
     final solid = parseSolid(path);
+
+    // Fundo sólido → não há imagem a carregar
     if (path == null || solid != null) {
-      setState(() {
-        _bgImg = null;
-        _bgPath = path;
-      });
+      _bgImg = null;
+      _bgPath = path;
+      _bgAnim.forward(from: 0);
+      _contentAnim.forward(from: 0.0);
+      setState(() {});
       return;
     }
-    if (_bgPath == path && _bgImg != null) return;
+
+    // mesmo bg → não recarregar
+    if (_bgPath == path && _bgImg != null) {
+      _bgAnim.forward(from: 0);
+      _contentAnim.forward(from: 0.0);
+      return;
+    }
+
+    _bgImg = null;
+    _bgPath = path;
+    setState(() {});
+
+    // carregar imagem
     final cfg = createLocalImageConfiguration(ctx);
     final stream = AssetImage(path).resolve(cfg);
+
     final c = Completer<ui.Image>();
     late final ImageStreamListener l;
+
     l = ImageStreamListener(
       (info, _) {
         stream.removeListener(l);
@@ -53,13 +73,19 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         c.completeError(e);
       },
     );
+
     stream.addListener(l);
     final img = await c.future;
+
     if (!mounted) return;
-    setState(() {
-      _bgImg = img;
-      _bgPath = path;
-    });
+
+    setState(() => _bgImg = img);
+
+    // Primeiro fade do fundo
+    await _bgAnim.forward(from: 0);
+
+    // Depois fade do conteúdo
+    _contentAnim.forward(from: 0);
   }
 
   Future<void> _saveIfDirty() async {
@@ -95,8 +121,27 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   }
 
   @override
+  void didUpdateWidget(NoteEditorPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.noteId != widget.noteId) {
+      _bgImg = null;
+      _bgPath = null;
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+
+    _bgAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    _contentAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
 
     _title.addListener(() {
       ref.read(editorProvider.notifier).set(title: _title.text);
@@ -104,11 +149,14 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final ctrl = ref.read(editorProvider.notifier);
+
       if (widget.noteId != null) {
         final db = ref.read(dbProvider);
+
         final n = await (db.select(
           db.notes,
         )..where((t) => t.id.equals(widget.noteId!))).getSingle();
+
         final d = NoteDraft(
           title: n.title,
           body: n.body,
@@ -116,15 +164,23 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
           folderId: n.folderId,
           bgKey: n.bgKey,
         );
-        ctrl.load(d);
+
+        Future.microtask(() {
+          ctrl.load(d);
+        });
+
         ref.read(editorBaselineProvider.notifier).state = d;
+
         _title.text = d.title;
         _lineCtrl.setText(d.body);
+
         setState(() {});
+        _loadBgImage(context, d.bgKey);
       } else {
         const d = NoteDraft();
-        ctrl.load(d);
+        Future.microtask(() => ctrl.load(d));
         ref.read(editorBaselineProvider.notifier).state = d;
+        _loadBgImage(context, null);
       }
     });
   }
@@ -133,24 +189,19 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   void dispose() {
     _title.dispose();
     _titleNode.dispose();
+    _bgAnim.dispose();
+    _contentAnim.dispose();
     super.dispose();
   }
 
-  void _onChecklistPressed() {
-    _lineCtrl.toggleChecklistForFocused();
-  }
+  void _onChecklistPressed() => _lineCtrl.toggleChecklistForFocused();
 
   @override
   Widget build(BuildContext context) {
     final st = ref.watch(editorProvider);
+
     final pal = paletteFor(st.bgKey, Theme.of(context).brightness);
     final solidColor = parseSolid(st.bgKey);
-
-    if (_bgPath != st.bgKey) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _loadBgImage(context, st.bgKey),
-      );
-    }
 
     final titleStyle = TextStyle(
       fontSize: 28,
@@ -158,6 +209,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       color: pal.title,
       height: 1.2,
     );
+
     final bodyStyle = TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w400,
@@ -167,68 +219,66 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
 
     final topPad = MediaQuery.paddingOf(context).top + kToolbarHeight - 30;
 
-    return WillPopScope(
-      onWillPop: () async {
-        ref.read(editorProvider.notifier).set(body: _lineCtrl.text);
-        await _saveIfDirty();
-        return true;
-      },
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        resizeToAvoidBottomInset: true,
-        body: Stack(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      resizeToAvoidBottomInset: true,
+      body: FadeTransition(
+        opacity: _bgAnim,
+        child: Stack(
           fit: StackFit.expand,
           children: [
             if (solidColor != null)
               Positioned.fill(child: ColoredBox(color: solidColor))
-            else if (st.bgKey != null)
-              Positioned.fill(
-                child: Image.asset(
-                  st.bgKey!,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                  filterQuality: FilterQuality.high,
+            else if (_bgImg != null)
+              RawImage(
+                image: _bgImg,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+              ),
+
+            FadeTransition(
+              opacity: _contentAnim,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(28, topPad, 22, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _title,
+                      focusNode: _titleNode,
+                      style: titleStyle,
+                      decoration: const InputDecoration(
+                        hintText: 'Título',
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        isCollapsed: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: LineEditor(
+                        controller: _lineCtrl,
+                        initialText: st.body,
+                        style: bodyStyle,
+                        onChanged: (txt) =>
+                            ref.read(editorProvider.notifier).set(body: txt),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(28, topPad, 22, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 🔹 título sem fundo nem caixa
-                  TextField(
-                    controller: _title,
-                    focusNode: _titleNode,
-                    style: titleStyle,
-                    decoration: const InputDecoration(
-                      hintText: 'Título',
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      isCollapsed: true,
-                      contentPadding: EdgeInsets.zero,
-                      filled: false,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // 🔹 corpo sem caixa, texto apenas
-                  Expanded(
-                    child: LineEditor(
-                      controller: _lineCtrl,
-                      initialText: st.body,
-                      style: bodyStyle,
-                      onChanged: (txt) =>
-                          ref.read(editorProvider.notifier).set(body: txt),
-                    ),
-                  ),
-                ],
-              ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: EditorToolbarHost(onChecklist: _onChecklistPressed),
+
+            FadeTransition(
+              opacity: _contentAnim,
+              child: Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: EditorToolbarHost(onChecklist: _onChecklistPressed),
+              ),
             ),
           ],
         ),
