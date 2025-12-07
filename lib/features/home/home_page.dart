@@ -1,7 +1,5 @@
-// lib/features/home/home_page.dart
 // HomePage com search neon, clear "x", chips que desaparecem com query
 // e divisor neon FIXO no topo da lista (sem “buraco” ao fazer scroll).
-
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -16,9 +14,8 @@ import 'package:notebox/features/home/widgets/note_grid.dart';
 final _searchVisibleProvider = StateProvider<bool>((_) => false);
 
 // Controller ligado ao provider para limpar o campo por código.
-final _searchControllerProvider = Provider.autoDispose<TextEditingController>((
-  ref,
-) {
+final _searchControllerProvider =
+    Provider.autoDispose<TextEditingController>((ref) {
   final c = TextEditingController(text: ref.read(searchQueryProvider));
   ref.onDispose(c.dispose);
   ref.listen<String>(searchQueryProvider, (prev, next) {
@@ -59,7 +56,8 @@ class HomePage extends ConsumerWidget {
               curve: Curves.easeOutCubic,
               opacity: showSearch ? 1 : 0,
               child: Padding(
-                padding: const EdgeInsets.only(top: 14, left: 16, right: 16, bottom: 14),
+                padding:
+                    const EdgeInsets.only(top: 14, left: 16, right: 16, bottom: 14),
                 child: Center(
                   child: SizedBox(
                     height: 60,
@@ -117,12 +115,8 @@ class HomePage extends ConsumerWidget {
                                           ),
                                           onPressed: () {
                                             ref
-                                                    .read(
-                                                      searchQueryProvider
-                                                          .notifier,
-                                                    )
-                                                    .state =
-                                                '';
+                                                .read(searchQueryProvider.notifier)
+                                                .state = '';
                                             ctrl.clear();
                                             FocusManager.instance.primaryFocus
                                                 ?.unfocus();
@@ -137,9 +131,7 @@ class HomePage extends ConsumerWidget {
                                   ),
                                 ),
                                 onChanged: (v) =>
-                                    ref
-                                            .read(searchQueryProvider.notifier)
-                                            .state =
+                                    ref.read(searchQueryProvider.notifier).state =
                                         v,
                               ),
                             ),
@@ -172,11 +164,10 @@ class HomePage extends ConsumerWidget {
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           child: Column(
             children: [
-              
               searchBar(),
 
-              if (ref.watch(_searchVisibleProvider)) const SizedBox(height: 12), // ↑ ajusta aqui
-
+              if (ref.watch(_searchVisibleProvider))
+                const SizedBox(height: 12),
 
               // Chips desaparecem quando há query
               AnimatedSwitcher(
@@ -197,43 +188,21 @@ class HomePage extends ConsumerWidget {
               Expanded(
                 child: Stack(
                   children: [
-                    // Lista colada ao topo
-                    ref
-                        .watch(notesProvider)
-                        .when(
+                    ref.watch(notesProvider).when(
                           data: (notes) => notes.isEmpty
                               ? const Center(child: Text('Sem notas'))
-                              : const NoteGridWrapper(), // ver abaixo
+                              : const NoteGridWrapper(),
                           loading: () =>
                               const Center(child: CircularProgressIndicator()),
                           error: (e, _) => Center(child: Text('Erro: $e')),
                         ),
 
-                    if (!hasQuery) ...[
-                      // Header opaco que recorta a lista
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 10, // mesma altura do divisor
-                        child: IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surface, // fundo da página
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Divisor por cima do header
-                      const Positioned(
-                        top: 0,
-                        left: 22,
-                        right: 22,
-                        child: IgnorePointer(child: FlowNeonDivider()),
-                      ),
-                    ],
+                    const Positioned(
+                      top: 0,
+                      left: 22,
+                      right: 22,
+                      child: IgnorePointer(child: FlowNeonDivider()),
+                    ),
                   ],
                 ),
               ),
@@ -256,6 +225,6 @@ class NoteGridWrapper extends ConsumerWidget {
     final notes = ref.watch(notesProvider).value!;
     return NoteGrid(
       notes: notes,
-    ); // NoteGrid já com padding: EdgeInsets.fromLTRB(12, 0, 12, 12)
+    );
   }
 }

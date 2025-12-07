@@ -1,74 +1,59 @@
+// lib/app/notes_tasks_tabs.dart
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class NotesTasksTabs extends StatelessWidget {
-  final bool isNotes;
-  const NotesTasksTabs({super.key, required this.isNotes});
+  final int currentIndex;
+  final void Function(int) onSelect;
+
+  const NotesTasksTabs({
+    super.key,
+    required this.currentIndex,
+    required this.onSelect,
+  });
 
   @override
   Widget build(BuildContext context) {
-    const color = Color.fromARGB(255, 234, 0, 255);
-    final base = Theme.of(context).textTheme.titleLarge!.copyWith(
-          fontWeight: FontWeight.w700,
-        );
+    const pink = Color(0xFFEA00FF);
 
-    // medir textos
-    final notesW = _textWidth('Notes', base, context);
-    final tasksW = _textWidth('Tasks', base, context);
-
-    return SizedBox(
-      height: 50,
-      child: Stack(
-        children: [
-            Row(
-            children: [
-              InkWell(
-              onTap: () => context.go('/notes'),
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16, right: 24, top: 10),
-                child: Text(
-                'Notes',
-                style: base.copyWith(fontSize: 24),
-                ),
+    Widget tab(String label, int i) {
+      final selected = i == currentIndex;
+      return GestureDetector(
+        onTap: () => onSelect(i),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : Colors.grey[500],
               ),
-              ),
-              InkWell(
-              onTap: () => context.go('/tasks'),
-              child: Padding(
-                padding: const EdgeInsets.only(right: 24, top: 10),
-                child: Text(
-                'Tasks',
-                style: base.copyWith(fontSize: 24),
-                ),
-              ),
-              ),
-            ],
             ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOut,
-            left: isNotes ? 16 : (16 + notesW + 24),
-            bottom: 0,
-            width: isNotes ? notesW + 8 : tasksW + 15,
-            height: 4,
-            child: Container(
+            const SizedBox(height: 4),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              height: 4,
+              width: selected ? 42 : 0,
               decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(50),
+                color: pink,
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
+    }
 
-  double _textWidth(String text, TextStyle style, BuildContext context) {
-    final tp = TextPainter(
-      text: TextSpan(text: text, style: style),
-      maxLines: 1,
-      textDirection: Directionality.of(context),
-    )..layout();
-    return tp.width;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        tab("Notes", 0),
+        const SizedBox(width: 32),
+        tab("Tasks", 1),
+      ],
+    );
   }
 }

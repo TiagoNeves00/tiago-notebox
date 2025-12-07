@@ -5,6 +5,7 @@ import 'package:notebox/app/router/router.dart';
 import 'package:notebox/theme/app_theme.dart';
 import 'package:notebox/theme/theme_mode.dart';
 
+
 class NoteBoxApp extends ConsumerWidget {
   const NoteBoxApp({super.key});
 

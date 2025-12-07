@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:notebox/data/local/db_provider.dart';
 import 'package:notebox/data/repos/notes_repo.dart';
 import 'package:notebox/data/repos/revisions_repo.dart';
@@ -165,8 +166,6 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       height: 1.38,
     );
 
-    final topPad = MediaQuery.paddingOf(context).top + kToolbarHeight - 30;
-
     return WillPopScope(
       onWillPop: () async {
         ref.read(editorProvider.notifier).set(body: _lineCtrl.text);
@@ -174,13 +173,48 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
         return true;
       },
       child: Scaffold(
+        extendBodyBehindAppBar: true,
         backgroundColor: Colors.transparent,
         resizeToAvoidBottomInset: true,
+
+        // -----------------------------
+        //        APPBAR CORRIGIDO
+        // -----------------------------
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          centerTitle: true,
+          title: widget.noteId == null
+              ? const Text(
+                  "Nova Nota",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                )
+              : null,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+            ),
+            onPressed: () async {
+              ref.read(editorProvider.notifier).set(body: _lineCtrl.text);
+              await _saveIfDirty();
+              if (!mounted) return;
+              context.go('/notes');
+            },
+          ),
+        ),
+
         body: Stack(
           fit: StackFit.expand,
           children: [
+            // Fundo sólido
             if (solidColor != null)
               Positioned.fill(child: ColoredBox(color: solidColor))
+            // Fundo imagem
             else if (st.bgKey != null)
               Positioned.fill(
                 child: Image.asset(
@@ -190,12 +224,19 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                   filterQuality: FilterQuality.high,
                 ),
               ),
+
+            // Conteúdo principal
             Padding(
-              padding: EdgeInsets.fromLTRB(28, topPad, 22, 12),
+              padding: EdgeInsets.fromLTRB(
+                28,
+                MediaQuery.paddingOf(context).top + kToolbarHeight,
+                22,
+                12,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔹 título sem fundo nem caixa
+                  // Título
                   TextField(
                     controller: _title,
                     focusNode: _titleNode,
@@ -210,8 +251,10 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                       filled: false,
                     ),
                   ),
+
                   const SizedBox(height: 12),
-                  // 🔹 corpo sem caixa, texto apenas
+
+                  // Corpo
                   Expanded(
                     child: LineEditor(
                       controller: _lineCtrl,
@@ -224,6 +267,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 ],
               ),
             ),
+
+            // Barra de ferramentas
             Positioned(
               left: 0,
               right: 0,

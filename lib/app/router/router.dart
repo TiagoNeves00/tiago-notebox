@@ -1,78 +1,57 @@
-// lib/router/router.dart
-import 'package:flutter/material.dart';
+// lib/app/router/router.dart
 import 'package:go_router/go_router.dart';
-import 'package:notebox/app/router/transitions.dart';
-import 'package:notebox/app/shell.dart';
-import 'package:notebox/features/editor/note_editor_page.dart';
-import 'package:notebox/features/folders/folders_page.dart';
-import 'package:notebox/features/home/home_page.dart';
-import 'package:notebox/features/settings/settings_page.dart';
 
+import 'package:notebox/app/app_shell.dart';
+import 'package:notebox/features/home/home_page.dart';
+import 'package:notebox/features/tasks/tasks_page.dart';
+import 'package:notebox/features/folders/folders_page.dart';
+import 'package:notebox/features/settings/settings_page.dart';
+import 'package:notebox/features/editor/note_editor_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/notes',
   routes: [
+    // Shell com tabs só para Notes/Tasks
     ShellRoute(
-      builder: (ctx, state, child) => AppShell(child: child),
+      builder: (context, state, child) => AppShell(child: child),
       routes: [
         GoRoute(
           path: '/notes',
-          pageBuilder: (ctx, s) => CustomTransitionPage(
-            key: s.pageKey,
-            child: const HomePage(),
-            transitionsBuilder: Transitions.sharedAxisX,
-          ),
+          builder: (context, state) => const HomePage(),
         ),
         GoRoute(
           path: '/tasks',
-          pageBuilder: (ctx, s) => CustomTransitionPage(
-            key: s.pageKey,
-            child: const HomePage(),
-            transitionsBuilder: Transitions.sharedAxisX,
-          ),
-        ),
-        GoRoute(
-          path: '/folders',
-          pageBuilder: (ctx, s) => CustomTransitionPage(
-            key: s.pageKey,
-            child: const FoldersPage(),
-            transitionsBuilder: Transitions.sharedAxisY,
-          ),
-        ),
-        GoRoute(
-          path: '/settings',
-          pageBuilder: (ctx, s) => CustomTransitionPage(
-            key: s.pageKey,
-            child: const SettingsPage(),
-            transitionsBuilder: Transitions.fadeThrough,
-          ),
-        ),
-        GoRoute(
-          path: '/edit',
-          pageBuilder: (ctx, s) => CustomTransitionPage(
-            key: s.pageKey,
-            child: const NoteEditorPage(), // nova nota
-            transitionsBuilder: Transitions.sharedAxisZ,
-          ),
-        ),
-        GoRoute(
-          path: '/edit/:id',
-          pageBuilder: (ctx, s) {
-            final idStr = s.pathParameters['id']!;
-            final noteId = int.tryParse(idStr);
-            return CustomTransitionPage(
-              key: s.pageKey,
-              child: NoteEditorPage(noteId: noteId),
-              transitionsBuilder: Transitions.sharedAxisZ,
-            );
-          },
+          builder: (context, state) => const TasksPage(),
         ),
       ],
     ),
+
+    // Folders fora do shell
+    GoRoute(
+      path: '/folders',
+      builder: (context, state) => const FoldersPage(),
+    ),
+
+    // Settings fora do shell
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsPage(),
+    ),
+
+    // Editor (nova nota)
+    GoRoute(
+      path: '/edit',
+      builder: (context, state) => const NoteEditorPage(),
+    ),
+
+    // Editor (nota existente)
+    GoRoute(
+      path: '/edit/:id',
+      builder: (context, state) {
+        final idStr = state.pathParameters['id']!;
+        final noteId = int.tryParse(idStr);
+        return NoteEditorPage(noteId: noteId);
+      },
+    ),
   ],
-  errorPageBuilder: (ctx, s) => CustomTransitionPage<void>(
-    key: s.pageKey,
-    child: Scaffold(body: Center(child: Text('Rota inválida: ${s.uri}'))),
-    transitionsBuilder: Transitions.fadeThrough,
-  ),
 );
