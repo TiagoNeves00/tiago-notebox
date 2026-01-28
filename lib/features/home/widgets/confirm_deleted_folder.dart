@@ -7,7 +7,7 @@ Future<bool> confirmDeleteFolder(BuildContext context) async {
   return (await showDialog<bool>(
     context: context, useRootNavigator: true, barrierDismissible: true,
     builder: (_) => Dialog(
-      backgroundColor: Colors.transparent, insetPadding: const EdgeInsets.all(24),
+      backgroundColor: const Color.fromARGB(0, 58, 0, 0), insetPadding: const EdgeInsets.all(24),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Stack(children: [
