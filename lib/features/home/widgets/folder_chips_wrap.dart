@@ -73,8 +73,9 @@ class FolderChipsWrap extends ConsumerWidget {
                   ? [
                       BoxShadow(
                         color: glow.withOpacity(.9),
-                        blurRadius: 12,
+                        blurRadius: 10,
                         blurStyle: BlurStyle.normal,
+                        spreadRadius: 0,
                       )
                     ]
                   : const [],
@@ -89,8 +90,8 @@ class FolderChipsWrap extends ConsumerWidget {
             child: Wrap(
               alignment: WrapAlignment.center,
               runAlignment: WrapAlignment.center,
-              spacing: 4,
-              runSpacing: 0,
+              spacing: 5,
+              runSpacing: 2,
               children: [
                 // Todas
                 neonWrap(
@@ -103,6 +104,9 @@ class FolderChipsWrap extends ConsumerWidget {
                     side: BorderSide(
                       color: sel is All ? neonPink : outline,
                       width: 1.8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     onSelected: (_) =>
                         ref.read(folderFilterProvider.notifier).state = const All(),
@@ -127,7 +131,10 @@ class FolderChipsWrap extends ConsumerWidget {
                         color: selected ? neon : outline,
                         width: 1.8,
                       ),
-                      avatar: CircleAvatar(backgroundColor: dot, radius: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      avatar: CircleAvatar(backgroundColor: dot, radius: 8),
                       onSelected: (_) => ref.read(folderFilterProvider.notifier).state = ById(f.id),
                     ),
                   );
@@ -149,6 +156,9 @@ class FolderChipsWrap extends ConsumerWidget {
                     selected: false,
                     showCheckmark: false,
                     side: BorderSide(color: outline, width: 1.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     onSelected: (_) async {
                       final name = await confirmNewFolder(context);
                       if (name == null || name.trim().isEmpty) return;
