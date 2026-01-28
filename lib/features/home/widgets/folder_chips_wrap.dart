@@ -1,4 +1,6 @@
-import 'dart:ui';
+// lib/features/home/widgets/folder_chips_wrap.dart
+
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notebox/data/local/db.dart';
@@ -6,10 +8,41 @@ import 'package:notebox/data/local/db_provider.dart';
 import 'package:notebox/data/repos/folders_repo.dart';
 import 'package:notebox/features/home/providers/filters.dart';
 import 'package:notebox/features/home/providers/folder_colors.dart';
-import 'package:notebox/features/home/widgets/neon_action_button.dart';
+import 'package:notebox/features/home/widgets/confirm_new_folder.dart';
 
 class FolderChipsWrap extends ConsumerWidget {
   const FolderChipsWrap({super.key});
+
+  static const kFolderSoftColors = <int>[
+    0xFFE53935,
+    0xFFD81B60,
+    0xFF8E24AA,
+    0xFF5E35B1,
+    0xFF3949AB,
+    0xFF1E88E5,
+    0xFF039BE5,
+    0xFF00897B,
+    0xFF43A047,
+    0xFFFDD835,
+    0xFFFB8C00,
+    0xFFF4511E,
+    0xFF6D4C41,
+    0xFF757575,
+    0xFF546E7A,
+  ];
+
+  int _pickRandomFolderColor(List<Folder> folders) {
+    final used = <int>{
+      for (final f in folders)
+        if (f.color != null) f.color!,
+    };
+
+    final available = kFolderSoftColors.where((c) => !used.contains(c)).toList();
+    final list = available.isNotEmpty ? available : kFolderSoftColors;
+
+    list.shuffle();
+    return list.first;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,92 +52,6 @@ class FolderChipsWrap extends ConsumerWidget {
         .maybeWhen(data: (m) => m, orElse: () => const <int, int?>{});
     final sel = ref.watch(folderFilterProvider);
     final db = ref.watch(dbProvider);
-
-    // Neon sheet (sobe com teclado)
-    Future<String?> editName(BuildContext ctx, [String initial = '']) async {
-      final tc = TextEditingController(text: initial);
-      const c1 = Color(0xFFEA00FF), c2 = Color(0xFF00F5FF);
-      return showModalBottomSheet<String>(
-        context: ctx,
-        isScrollControlled: true,
-        useSafeArea: true,
-        backgroundColor: Colors.transparent,
-        useRootNavigator: false,
-        showDragHandle: true,
-        builder: (bctx) {
-          final mq = MediaQuery.of(bctx);
-          return AnimatedPadding(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            padding: mq.viewInsets,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Material(
-                  color: const Color(0xFF0E1720).withOpacity(.90),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Nova pasta',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: tc,
-                          autofocus: true,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: 'Nome da pasta',
-                            labelStyle: const TextStyle(
-                              color: Color(0xFFAED2FF),
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFF0A1119),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: c2),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: c1,
-                                width: 1.6,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        ValueListenableBuilder<TextEditingValue>(
-                          valueListenable: tc,
-                          builder: (_, v, __) => SizedBox(
-                            width: double.infinity,
-                            child: NeonActionButton(
-                              icon: Icons.check,
-                              label: 'Guardar',
-                              enabled: v.text.trim().isNotEmpty,
-                              onPressed: () => Navigator.of(bctx).pop(tc.text.trim()),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    }
 
     return StreamBuilder<List<Folder>>(
       stream: folders$,
@@ -120,16 +67,16 @@ class FolderChipsWrap extends ConsumerWidget {
         }) {
           return AnimatedContainer(
             duration: const Duration(milliseconds: 120),
-            margin: const EdgeInsets.symmetric(
-              vertical: 1,
-            ), // reduced vertical margin
+            margin: const EdgeInsets.symmetric(vertical: 1),
             decoration: BoxDecoration(
               boxShadow: selected
-                  ? [BoxShadow(
-                    color: glow.withOpacity(.9),
-                    blurRadius: 12,
-                    blurStyle: BlurStyle.normal
-                  )]
+                  ? [
+                      BoxShadow(
+                        color: glow.withOpacity(.9),
+                        blurRadius: 12,
+                        blurStyle: BlurStyle.normal,
+                      )
+                    ]
                   : const [],
             ),
             child: child,
@@ -142,8 +89,8 @@ class FolderChipsWrap extends ConsumerWidget {
             child: Wrap(
               alignment: WrapAlignment.center,
               runAlignment: WrapAlignment.center,
-              spacing: 4, // reduced horizontal spacing
-              runSpacing: 0, // reduced vertical spacing
+              spacing: 4,
+              runSpacing: 0,
               children: [
                 // Todas
                 neonWrap(
@@ -158,8 +105,7 @@ class FolderChipsWrap extends ConsumerWidget {
                       width: 1.8,
                     ),
                     onSelected: (_) =>
-                        ref.read(folderFilterProvider.notifier).state =
-                            const All(),
+                        ref.read(folderFilterProvider.notifier).state = const All(),
                   ),
                 ),
 
@@ -182,15 +128,12 @@ class FolderChipsWrap extends ConsumerWidget {
                         width: 1.8,
                       ),
                       avatar: CircleAvatar(backgroundColor: dot, radius: 6),
-                      onSelected: (_) =>
-                          ref.read(folderFilterProvider.notifier).state = ById(
-                            f.id,
-                          ),
+                      onSelected: (_) => ref.read(folderFilterProvider.notifier).state = ById(f.id),
                     ),
                   );
                 }),
 
-                // Adicionar (icon centered, same vertical size as other chips)
+                // Adicionar
                 neonWrap(
                   selected: false,
                   glow: neonPink,
@@ -198,7 +141,6 @@ class FolderChipsWrap extends ConsumerWidget {
                     label: const Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Invisible text reserves the same height as text chips
                         Opacity(opacity: 0, child: Text('Todas')),
                         Icon(Icons.add, size: 16.5),
                       ],
@@ -208,11 +150,17 @@ class FolderChipsWrap extends ConsumerWidget {
                     showCheckmark: false,
                     side: BorderSide(color: outline, width: 1.2),
                     onSelected: (_) async {
-                      final name = await editName(context, '');
-                      if (name == null || name.isEmpty) return;
-                      await db
-                          .into(db.folders)
-                          .insert(FoldersCompanion.insert(name: name));
+                      final name = await confirmNewFolder(context);
+                      if (name == null || name.trim().isEmpty) return;
+
+                      final color = _pickRandomFolderColor(folders);
+
+                      await db.into(db.folders).insert(
+                            FoldersCompanion.insert(
+                              name: name.trim(),
+                              color: drift.Value(color),
+                            ),
+                          );
                     },
                   ),
                 ),
