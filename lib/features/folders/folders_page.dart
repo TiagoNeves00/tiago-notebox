@@ -10,6 +10,7 @@ import 'package:notebox/data/local/db_provider.dart';
 import 'package:notebox/data/repos/folders_repo.dart';
 import 'package:notebox/features/folders/note_counts_provider.dart';
 import 'package:notebox/features/home/widgets/confirm_deleted_folder.dart';
+import 'package:notebox/features/home/widgets/confirm_new_folder.dart';
 import 'package:notebox/features/home/widgets/confirm_rename_folder.dart';
 import 'package:notebox/features/home/widgets/neon_action_button.dart';
 import 'package:notebox/features/home/widgets/neon_icon_button.dart';
@@ -46,6 +47,22 @@ class FoldersPage extends ConsumerWidget {
         .maybeWhen(data: (m) => m, orElse: () => const <int, int>{});
     final editOpen = ref.watch(foldersEditDialogOpenProvider);
 
+    int _pickRandomFolderColor(List<Folder> folders) {
+      final used = {
+        for (final f in folders)
+          if (f.color != null) f.color!,
+      };
+
+      final available = kFolderSoftColors
+          .where((c) => !used.contains(c))
+          .toList();
+
+      final list = available.isNotEmpty ? available : kFolderSoftColors;
+
+      list.shuffle();
+      return list.first;
+    }
+
     Future<String?> openRenameDialog({required String initial}) async {
       ref.read(foldersEditDialogOpenProvider.notifier).state = true;
       try {
@@ -79,10 +96,13 @@ class FoldersPage extends ConsumerWidget {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
-                                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                                   ),
                               children: [
                                 TextSpan(text: f.name),
@@ -92,7 +112,9 @@ class FoldersPage extends ConsumerWidget {
                                     padding: const EdgeInsets.only(left: 4),
                                     child: Text(
                                       '(${counts[f.id] ?? 0})',
-                                      style: Theme.of(context).textTheme.bodySmall,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     ),
                                   ),
                                 ),
@@ -124,7 +146,9 @@ class FoldersPage extends ConsumerWidget {
                                   return Opacity(
                                     opacity: isUsed ? 0.35 : 1,
                                     child: InkWell(
-                                      onTap: isUsed ? null : () => Navigator.pop(context, v),
+                                      onTap: isUsed
+                                          ? null
+                                          : () => Navigator.pop(context, v),
                                       child: Padding(
                                         padding: const EdgeInsets.all(6),
                                         child: Stack(
@@ -137,16 +161,25 @@ class FoldersPage extends ConsumerWidget {
                                                 decoration: BoxDecoration(
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
-                                                    color: Colors.black.withOpacity(0.15),
+                                                    color: Colors.black
+                                                        .withOpacity(0.15),
                                                     width: 2,
                                                   ),
                                                 ),
                                               ),
                                             ),
                                             if (f.color == v)
-                                              const Icon(Icons.check, size: 18, color: Colors.white),
+                                              const Icon(
+                                                Icons.check,
+                                                size: 18,
+                                                color: Colors.white,
+                                              ),
                                             if (isUsed && f.color != v)
-                                              const Icon(Icons.block, size: 18, color: Colors.white),
+                                              const Icon(
+                                                Icons.block,
+                                                size: 18,
+                                                color: Colors.white,
+                                              ),
                                           ],
                                         ),
                                       ),
@@ -156,7 +189,9 @@ class FoldersPage extends ConsumerWidget {
                               ),
                             );
                             if (picked != null && picked != f.color) {
-                              await (db.update(db.folders)..where((t) => t.id.equals(f.id))).write(
+                              await (db.update(
+                                db.folders,
+                              )..where((t) => t.id.equals(f.id))).write(
                                 FoldersCompanion(color: drift.Value(picked)),
                               );
                             }
@@ -168,8 +203,13 @@ class FoldersPage extends ConsumerWidget {
                               shape: BoxShape.circle,
                               color: f.color != null
                                   ? Color(f.color!)
-                                  : Theme.of(context).colorScheme.outlineVariant,
-                              border: Border.all(color: Colors.black.withOpacity(0.15), width: 2),
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                              border: Border.all(
+                                color: Colors.black.withOpacity(0.15),
+                                width: 2,
+                              ),
                             ),
                           ),
                         ),
@@ -179,10 +219,14 @@ class FoldersPage extends ConsumerWidget {
                           tooltip: 'Renomear',
                           glow: const Color(0xFFEA00FF),
                           onPressed: () async {
-                            final name = await openRenameDialog(initial: f.name);
+                            final name = await openRenameDialog(
+                              initial: f.name,
+                            );
                             if (name == null || name.trim().isEmpty) return;
 
-                            await (db.update(db.folders)..where((t) => t.id.equals(f.id))).write(
+                            await (db.update(
+                              db.folders,
+                            )..where((t) => t.id.equals(f.id))).write(
                               FoldersCompanion(name: drift.Value(name.trim())),
                             );
                           },
@@ -197,17 +241,28 @@ class FoldersPage extends ConsumerWidget {
                             if (!ok) return;
 
                             await db.transaction(() async {
-                              await (db.update(db.notes)..where((t) => t.folderId.equals(f.id)))
-                                  .write(const NotesCompanion(folderId: drift.Value(null)));
-                              await (db.delete(db.folders)..where((t) => t.id.equals(f.id))).go();
+                              await (db.update(
+                                db.notes,
+                              )..where((t) => t.folderId.equals(f.id))).write(
+                                const NotesCompanion(
+                                  folderId: drift.Value(null),
+                                ),
+                              );
+                              await (db.delete(
+                                db.folders,
+                              )..where((t) => t.id.equals(f.id))).go();
                             });
 
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context)
                               ..clearSnackBars()
-                              ..showSnackBar(const SnackBar(
-                                content: Text('Pasta eliminada. Notas foram para "Sem pasta".'),
-                              ));
+                              ..showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Pasta eliminada. Notas foram para "Sem pasta".',
+                                  ),
+                                ),
+                              );
                           },
                         ),
                       ],
@@ -225,12 +280,29 @@ class FoldersPage extends ConsumerWidget {
               icon: Icons.add,
               label: 'Nova pasta',
               onPressed: () async {
-                final name = await openRenameDialog(initial: '');
-                if (name == null || name.trim().isEmpty) return;
+                ref.read(foldersEditDialogOpenProvider.notifier).state = true;
+                try {
+                  final name = await confirmNewFolder(context);
+                  if (name == null || name.trim().isEmpty) return;
 
-                await db.into(db.folders).insert(
-                      FoldersCompanion.insert(name: name.trim()),
-                    );
+                  final folders = await ref
+                      .read(foldersRepoProvider)
+                      .watchAll()
+                      .first;
+                  final color = _pickRandomFolderColor(folders);
+
+                  await db
+                      .into(db.folders)
+                      .insert(
+                        FoldersCompanion.insert(
+                          name: name.trim(),
+                          color: drift.Value(color),
+                        ),
+                      );
+                } finally {
+                  ref.read(foldersEditDialogOpenProvider.notifier).state =
+                      false;
+                }
               },
             ),
           ),
