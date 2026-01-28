@@ -237,7 +237,7 @@ class FoldersPage extends ConsumerWidget {
                           tooltip: 'Eliminar',
                           glow: const Color(0xFFEA00FF),
                           onPressed: () async {
-                            final ok = await confirmDeleteFolder(context);
+                            final ok = await confirmDeleteFolder(context, folderName: f.name);
                             if (!ok) return;
 
                             await db.transaction(() async {
