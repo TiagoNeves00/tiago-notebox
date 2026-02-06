@@ -9,9 +9,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notebox/data/local/db_provider.dart';
 import 'package:notebox/data/repos/notes_repo.dart';
 import 'package:notebox/data/repos/revisions_repo.dart';
+import 'package:notebox/features/editor/bg_picker_sheet.dart';
 import 'package:notebox/features/editor/editor_baseline.dart';
 import 'package:notebox/features/editor/editor_ctrl.dart';
 import 'package:notebox/features/editor/editor_save_handler.dart';
+import 'package:notebox/features/editor/note_editor_toolbar.dart';
+import 'package:notebox/features/editor/widgets/neon_quill_toolbar.dart';
 import 'package:notebox/features/home/widgets/rich_note_editor.dart';
 import 'package:notebox/theme/bg_text_palettes.dart';
 
@@ -46,7 +49,8 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage>
 
   String _formatDate(DateTime d) {
     final now = DateTime.now();
-    final sameDay = now.year == d.year && now.month == d.month && now.day == d.day;
+    final sameDay =
+        now.year == d.year && now.month == d.month && now.day == d.day;
 
     final hh = d.hour.toString().padLeft(2, '0');
     final mm = d.minute.toString().padLeft(2, '0');
@@ -89,10 +93,10 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage>
   }
 
   @override
-void didChangeDependencies() {
-  super.didChangeDependencies();
-  _container ??= ProviderScope.containerOf(context, listen: false);
-}
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _container ??= ProviderScope.containerOf(context, listen: false);
+  }
 
   void _setQuillDocument(Document doc) {
     final old = _quillCtrl;
@@ -107,15 +111,19 @@ void didChangeDependencies() {
       selection: const TextSelection.collapsed(offset: 0),
     );
 
-    c.formatSelection(Attribute.clone(
-      Attribute.size,
-      '30', // tamanho do corpo
-    ));
+    c.formatSelection(
+      Attribute.clone(
+        Attribute.size,
+        '30', // tamanho do corpo
+      ),
+    );
 
-    c.formatSelection(Attribute.clone(
-      Attribute.lineHeight,
-      '1.5', // espaçamento entre linhas
-    ));
+    c.formatSelection(
+      Attribute.clone(
+        Attribute.lineHeight,
+        '1.5', // espaçamento entre linhas
+      ),
+    );
 
     _quillCtrl = c;
     _attachDocListener(c);
@@ -134,7 +142,9 @@ void didChangeDependencies() {
     final base = ref.read(editorBaselineProvider);
     if (!isDirty(st, base)) return;
 
-    final id = await ref.read(notesRepoProvider).upsert(
+    final id = await ref
+        .read(notesRepoProvider)
+        .upsert(
           id: widget.noteId,
           title: st.title,
           body: st.body,
@@ -143,7 +153,9 @@ void didChangeDependencies() {
           bgKey: st.bgKey,
         );
 
-    await ref.read(revisionsRepoProvider).add(
+    await ref
+        .read(revisionsRepoProvider)
+        .add(
           id,
           jsonEncode({
             'title': st.title,
@@ -243,9 +255,9 @@ void didChangeDependencies() {
 
       if (widget.noteId != null) {
         final db = ref.read(dbProvider);
-        final n = await (db.select(db.notes)
-              ..where((t) => t.id.equals(widget.noteId!)))
-            .getSingle();
+        final n = await (db.select(
+          db.notes,
+        )..where((t) => t.id.equals(widget.noteId!))).getSingle();
 
         if (!mounted) return;
 
@@ -284,7 +296,6 @@ void didChangeDependencies() {
 
   @override
   void dispose() {
-
     _title.dispose();
     _titleNode.dispose();
 
@@ -308,13 +319,13 @@ void didChangeDependencies() {
 
     final bgKey = st.bgKey;
 
-// se bgKey mudou, recarrega fundo (imagem ou cor)
-if (_bgPath != bgKey) {
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (!mounted) return;
-    _loadBgImage(context, bgKey);
-  });
-}
+    // se bgKey mudou, recarrega fundo (imagem ou cor)
+    if (_bgPath != bgKey) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _loadBgImage(context, bgKey);
+      });
+    }
 
     final pal = paletteFor(st.bgKey, Theme.of(context).brightness);
     final solidColor = parseSolid(st.bgKey);
@@ -353,7 +364,9 @@ if (_bgPath != bgKey) {
                 filterQuality: FilterQuality.high,
               )
             else
-              const Positioned.fill(child: ColoredBox(color: Color(0xFF08131D))),
+              const Positioned.fill(
+                child: ColoredBox(color: Color(0xFF08131D)),
+              ),
 
             FadeTransition(
               opacity: _contentAnim,
@@ -387,22 +400,43 @@ if (_bgPath != bgKey) {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 10),
                     Divider(
                       height: 16,
                       thickness: 0.6,
                       color: Colors.white.withOpacity(0.35),
                     ),
-                    const SizedBox(height: 12),
+
                     Expanded(
                       child: qc == null
                           ? const SizedBox.shrink()
-                          : RichNoteEditor(
-                              controller: qc,
-                              focusNode: _bodyFocus,
-                              scrollController: _bodyScroll,
-                              textStyle: bodyStyle,
-                              cursorColor: const Color(0xFFEA00FF),
+                          : Column(
+                              children: [
+                                NeonQuillToolbar(
+                                  controller: qc,
+                                  onPickBackground: () => showModalBottomSheet(
+                                    context: context,
+                                    useRootNavigator: true,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => const BgPickerSheet(),
+                                  ),
+                                ),
+
+                                Divider(
+                                  height: 16,
+                                  thickness: 0.6,
+                                  color: Colors.white.withOpacity(0.35),
+                                ),
+                                Expanded(
+                                  child: RichNoteEditor(
+                                    controller: qc,
+                                    focusNode: _bodyFocus,
+                                    scrollController: _bodyScroll,
+                                    textStyle: bodyStyle,
+                                    cursorColor: const Color(0xFFEA00FF),
+                                  ),
+                                ),
+                              ],
                             ),
                     ),
                   ],
