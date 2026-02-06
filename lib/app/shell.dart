@@ -1,17 +1,13 @@
-// app_shell.dart — ícones atualizados para estilo neon (glow estático).
-// Usa NeonIconButton em todos os botões da AppBar, com gate de enabled no Guardar.
-
-import 'dart:convert';
+// app_shell.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:notebox/app/notes_tasks_tabs.dart';
-import 'package:notebox/data/repos/notes_repo.dart';
-import 'package:notebox/data/repos/revisions_repo.dart';
+import 'package:notebox/features/editor/bg_picker_sheet.dart';
 import 'package:notebox/features/editor/editor_baseline.dart';
 import 'package:notebox/features/editor/editor_ctrl.dart';
-import 'package:notebox/features/editor/note_bg_picker.dart';
+import 'package:notebox/features/editor/editor_save_handler.dart';
 import 'package:notebox/features/home/widgets/folder_pill.dart';
 import 'package:notebox/features/home/widgets/neon_icon_button.dart';
 import 'package:notebox/theme/theme_mode.dart';
@@ -22,16 +18,12 @@ class AppShell extends ConsumerWidget {
 
   bool _isHome(String loc) =>
       loc.startsWith('/notes') || loc.startsWith('/tasks');
+
   String _titleFor(String loc) {
     if (loc.startsWith('/folders')) return 'Pastas';
     if (loc.startsWith('/settings')) return 'Settings';
     if (loc.startsWith('/edit')) return 'Nota';
     return '';
-  }
-
-  int? _editingIdFrom(String loc) {
-    final m = RegExp(r'^/edit/(\d+)').firstMatch(loc);
-    return m != null ? int.tryParse(m.group(1)!) : null;
   }
 
   @override
@@ -47,9 +39,17 @@ class AppShell extends ConsumerWidget {
 
     final hasBg = isEdit && ref.watch(editorProvider).bgKey != null;
 
+    // handler registado pelo NoteEditorPage
+    final saveHandler = ref.watch(editorSaveHandlerProvider);
+
+    if (!isEdit && saveHandler != null) {
+      Future.microtask(() {
+        ref.read(editorSaveHandlerProvider.notifier).state = null;
+      });
+    }
+
     const glowPink = Color(0xFFEA00FF);
 
-    // helper para aplicar enabled/disabled mantendo NeonIconButton
     Widget neonIcon({
       required IconData icon,
       required VoidCallback? onPressed,
@@ -69,32 +69,20 @@ class AppShell extends ConsumerWidget {
       );
     }
 
-    Future<void> saveEditorIfDirty() async {
-      if (!dirty) return;
-      final id = _editingIdFrom(loc);
-      final savedId = await ref
-          .read(notesRepoProvider)
-          .upsert(
-            id: id,
-            title: draft.title,
-            body: draft.body,
-            color: draft.color,
-            folderId: draft.folderId,
-            bgKey: draft.bgKey,
-          );
-      await ref
-          .read(revisionsRepoProvider)
-          .add(
-            savedId,
-            jsonEncode({
-              'title': draft.title,
-              'body': draft.body,
-              'color': draft.color,
-              'folderId': draft.folderId,
-              'bgKey': draft.bgKey,
-            }),
-          );
-      ref.read(editorBaselineProvider.notifier).state = draft;
+    Future<void> _saveAndMaybePop({required bool popAfter}) async {
+      final fn = saveHandler;
+      if (fn != null) {
+        await fn();
+        if (!context.mounted) return;
+      }
+
+      if (popAfter) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/notes');
+        }
+      }
     }
 
     return Scaffold(
@@ -117,11 +105,14 @@ class AppShell extends ConsumerWidget {
                 icon: const Icon(Icons.arrow_back),
                 tooltip: 'Voltar',
                 onPressed: () async {
-                  if (isEdit) await saveEditorIfDirty();
-                  if (context.canPop()) {
-                    context.pop();
+                  if (isEdit && dirty) {
+                    await _saveAndMaybePop(popAfter: true);
                   } else {
-                    context.go('/notes');
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/notes');
+                    }
                   }
                 },
               ),
@@ -179,29 +170,33 @@ class AppShell extends ConsumerWidget {
                       IconTheme(
                         data: const IconThemeData(size: 32),
                         child: neonIcon(
-                          icon: Icons.image_outlined,
-                          tooltip: 'Customize',
+                          icon: Icons.wallpaper_rounded,
+                          tooltip: 'Fundo',
                           glow: glowPink,
-                          onPressed: () => showNoteBgPicker(context, ref),
+                          onPressed: () => showModalBottomSheet(
+                            context: context,
+                            useRootNavigator: true,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => const BgPickerSheet(),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
+
                       IconTheme(
                         data: const IconThemeData(size: 32),
                         child: neonIcon(
                           icon: Icons.check_circle_outline_rounded,
                           tooltip: 'Guardar',
                           glow: glowPink,
-                          enabled: dirty,
-                          onPressed: dirty
-                              ? () async {
-                                  await saveEditorIfDirty();
-                                  context.pop();
-                                }
+                          enabled: dirty && saveHandler != null,
+                          onPressed: (dirty && saveHandler != null)
+                              ? () async => _saveAndMaybePop(popAfter: true)
                               : null,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 12),
                     ]
                   : null),
       ),

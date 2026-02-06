@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,90 @@ class _NoteCardState extends ConsumerState<NoteCard> {
       );
   }
 
+  String _deltaJsonToPlainText(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return raw;
+
+      final sb = StringBuffer();
+      for (final op in decoded) {
+        if (op is Map && op['insert'] != null) {
+          final ins = op['insert'];
+          if (ins is String) {
+            sb.write(ins);
+          } else {
+            // embeds (imagem, etc.) -> ignora no preview
+          }
+        }
+      }
+
+      // normaliza quebras para ficar bonito no card
+      final txt = sb.toString().replaceAll('\r', '');
+      return txt;
+    } catch (_) {
+      // não é JSON -> assume texto antigo
+      return raw;
+    }
+  }
+
+  String quillBodyToPlainText(String raw) {
+    // 1) tenta interpretar como Delta JSON do flutter_quill
+    try {
+      final decoded = jsonDecode(raw);
+
+      if (decoded is List) {
+        final buf = StringBuffer();
+
+        for (final op in decoded) {
+          if (op is Map && op.containsKey('insert')) {
+            final ins = op['insert'];
+
+            // texto normal
+            if (ins is String) {
+              buf.write(ins);
+            } else {
+              // embeds (imagens, etc). não queremos JSON no preview
+              // podes trocar por '🖼️' ou '📎' se quiseres indicar que há embed
+              // buf.write(' 🖼️ ');
+            }
+          }
+        }
+
+        final s = buf.toString();
+
+        // normaliza: remove \n extra e espaços repetidos
+        final normalized = s
+            .replaceAll('\r', '')
+            .replaceAll('\n', ' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
+        return normalized;
+      }
+    } catch (_) {
+      // não é JSON (nota antiga), cai para fallback
+    }
+
+    // 2) fallback: texto simples antigo
+    return raw
+        .replaceAll('\r', '')
+        .replaceAll('\n', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  String _previewText(String raw, {int maxChars = 220}) {
+    final plain = _deltaJsonToPlainText(raw).trim();
+    if (plain.isEmpty) return '';
+    // para cards, normalmente fica melhor sem múltiplas linhas gigantes
+    final normalized = plain
+        .replaceAll('\n', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ');
+    return normalized.length <= maxChars
+        ? normalized
+        : '${normalized.substring(0, maxChars)}…';
+  }
+
   @override
   Widget build(BuildContext context) {
     const radius = 12.0;
@@ -57,6 +142,8 @@ class _NoteCardState extends ConsumerState<NoteCard> {
     final pal = paletteFor(widget.note.bgKey, Theme.of(context).brightness);
     final cardFill = cs.surfaceContainerHighest.withOpacity(isDark ? .92 : .96);
     final solid = parseSolid(widget.note.bgKey);
+
+    final preview = quillBodyToPlainText(widget.note.body);
 
     return Padding(
       padding: widget.outerPadding,
@@ -143,9 +230,9 @@ class _NoteCardState extends ConsumerState<NoteCard> {
                               height: 2,
                             ),
                             const SizedBox(height: 10),
-                            Flexible(
+                            Expanded(
                               child: Text(
-                                widget.note.body,
+                                preview,
                                 maxLines: 6,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodyMedium

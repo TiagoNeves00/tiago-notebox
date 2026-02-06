@@ -245,7 +245,9 @@ class HomePage extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: ModernFab(onCreate: () => context.push('/edit')),
+      floatingActionButton: ModernFab(
+        onCreate: () => context.push('/create-note'),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }

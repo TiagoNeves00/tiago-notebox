@@ -4,6 +4,7 @@ import 'package:notebox/app/router/transitions.dart';
 import 'package:notebox/app/shell.dart';
 import 'package:notebox/features/editor/note_editor_page.dart';
 import 'package:notebox/features/folders/folders_page.dart';
+import 'package:notebox/features/home/create_note_wizard_page.dart';
 import 'package:notebox/features/home/home_page.dart';
 import 'package:notebox/features/settings/settings_page.dart';
 
@@ -45,6 +46,18 @@ final appRouter = GoRouter(
             transitionsBuilder: Transitions.fadeOnly,
           ),
         ),
+
+        // CREATE NOTE WIZARD
+        GoRoute(
+          path: '/create-note',
+          pageBuilder: (ctx, s) => CustomTransitionPage(
+            key: s.pageKey,
+            child: const CreateNoteWizardPage(),
+            transitionsBuilder: Transitions.fadeOnly,
+            transitionDuration: const Duration(milliseconds: 250),
+          ),
+        ),
+
 
         // NOVA NOTA
         GoRoute(
